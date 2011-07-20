@@ -225,9 +225,8 @@ class ItemTest(unittest.TestCase):
         self.assertEqual(expected, whereclause)
         
         
-        
-        
-        
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
+    #suite = unittest.TestLoader().loadTestsFromTestCase(ItemTest)
+    #unittest.main()
     unittest.main()

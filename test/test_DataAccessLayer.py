@@ -26,7 +26,7 @@ class DALTestCase(unittest.TestCase):
         
     def tearDown(self):
         '''
-        Clean out the persistence store so that we don't leave cruft behind
+        Clean out the persistence store so that we dont leave cruft behind
         this actually tests the delete calls
         '''
         try:
@@ -182,9 +182,6 @@ class DALTestCase(unittest.TestCase):
         
         self.assertFalse(rtn)
                                 
-                                
-
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
-    suite = unittest.TestLoader().loadTestsFromTestCase(DALTestCase)
-    suite.main()
+    unittest.main()
