@@ -6,6 +6,12 @@ Created on Jun 28, 2011
 
 CATEGORIES = ["Recreational", "Cultural", "Historical"]
 
+def genPK(name, category):
+    '''
+    Make a primary key from the name and category
+    '''
+    return "||" + name + "||" + category + "||"
+    
 class ThingToDo(): 
     '''
     Biz logic representation of the thing that gets passed between client & server
@@ -28,9 +34,7 @@ class ThingToDo():
         self._rating = None
         self._reviews = None
              
-    def genPK(self, name, category):
-        return "||" + name + "||" + category + "||"
-       
+      
     def setAttrs (self, name, category, createdBy, address=None, latlon=None, phone=None, email=None, url=None, descr=None, rating=None, reviews=None):
         self._name = name
         self._category = category
@@ -52,7 +56,7 @@ class ThingToDo():
         
         # Uniqueness is defined by concatenating the name&category 
         # strings and using this as the "primary key"
-        self._pk = self.genPK(self._name, self._category)
+        self._pk = genPK(self._name, self._category)
         self._serialized = dict(name=self._name,
                                 category=self._category,
                                 createdBy=self._createdBy,
