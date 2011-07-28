@@ -148,22 +148,6 @@ class ItemTest(unittest.TestCase):
         self.assertEqual(item._serialized['lat'], ll._lat)
         self.assertEqual(item._serialized['lon'], ll._lon)
         
-         
-                
-# Requirement: An update to an item is automatically persisted
-###
-
-### 
-# Requirement: Be able to read an item from the persistence store
-#    using just lat/lon. Should take lat/lon as a center of a geo-box
-#    and return all matches inside the geo-box. The geo-box has to be
-#    some +/- from the center to get the sides of the box
-###
-
-###
-# Requirement: Be able to delete an item from the persistence store
-###    
-
 
 ###
 # Requirement: Be able to encapsulate a lat/lon pair

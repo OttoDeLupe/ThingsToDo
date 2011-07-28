@@ -49,7 +49,7 @@ class ThingToDo():
         
         # Uniqueness is defined by concatenating the name&category 
         # strings and using this as the "primary key"
-        self._pk = "||" + self._name + "||" + self._category + "||"
+        self._pk = genPK(self._name, self._category)
         self._serialized = dict(name=self._name,
                                 category=self._category,
                                 createdBy=self._createdBy,
@@ -77,7 +77,8 @@ class ThingToDo():
                                     rating=self._rating,
                                     reviews=self._reviews)  
 
-        
+        def genPK(self, name, category):
+            return "||" + name + "||" + category + "||"
    
   
 class LatLon():
