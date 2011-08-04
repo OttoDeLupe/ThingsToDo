@@ -67,20 +67,57 @@ class BizLayer():
         return json.JSONEncoder().encode(rtn)
               
 
-    def POST(self, jsonitem):
+    def POST(self, jsonitem=None, dbconn=None):
         '''
         dejsonize the supplied item, get a dbconnection, find the corresponding record (POST = Update)
         and do the necessary updates.
         '''
-        pass
+        # the input here can't come on the URL; has to come via the post packaging mechanism
+        if not jsonitem: jsonitem = web.input()
+        if not dbconn: self._DAL = DataAccessLayer.DataAccessLayer()
+        
+        assert True==False, "not yet implemented"
 
-    def PUT(self, jsonitem):
+    def PUT(self, jsonitem=None, dbconn=None):
         '''
+        PUT == Create
         djsonize the supplied item, get a dbConnection, see if the item already exists. If it does, update it
         if it doesnt, insert it.
         '''
-        pass
-
+        # the input here can't come on the URL; has to come via the post packaging mechanism
+        if not jsonitem: jsonitem = web.input()
+        if not dbconn: self._DAL = DataAccessLayer.DataAccessLayer()
+        # make an item and populate the attributes from the passed data
+        item = Item.ThingToDo()
+        itemData = json.JSONDecoder().decode(jsonitem)
+        
+        if itemData['lat'] and itemData['lon']:
+            itemData['latlon'] = Item.LatLon(itemData['lat'], itemData['lon'])
+            
+        # name, category and createdBy are required
+        if not (itemData['name'] and itemData['category'] and itemData['createdBy']):
+            raise AttributeError
+        
+        otherArgs = {}
+        for attr, val in itemData.iteritems():
+            if attr == 'name' or attr == 'category' or attr == 'createdBy':
+                # remove from the dict so that what remains is what setAttrs expects for keyword args
+                continue
+            if attr == 'lat' or attr == 'lon': continue
+            otherArgs[attr] = val
+        item.setAttrs(itemData['name'], itemData['category'], itemData['createdBy'], **otherArgs)
+        
+        # now that we have an item, write it to the dbconn
+        try:
+            dbconn.write(item._pk, item._serialized)
+        except:
+            print "problem in PUT writing item - %s" % sys.exc_info()[0]
+        
+        return json.JSONEncoder().encode(item._serialized)
+            
+        
+        
+        
     def DELETE(self, criteria):
         '''
         dejsonize the criteria, get a dbconn, search for the criteria. If the search matches more than

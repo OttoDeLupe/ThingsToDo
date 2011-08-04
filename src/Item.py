@@ -33,56 +33,49 @@ class ThingToDo():
         self._descr = None
         self._rating = None
         self._reviews = None
+
+    def serialize(self):
+        self._serialized = {}
+        if self._name:      self._serialized['name'] = self._name
+        if self._category:  self._serialized['category'] = self._category
+        if self._createdBy: self._serialized['createdBy'] = self._createdBy
+        if self._address:   self._serialized['address'] = self._address
+        if self._latlon:
+            self._serialized['lat'] = self._latlon._lat
+            self._serialized['lon'] = self._latlon._lon
+        if self._phone:     self._serialized['phone'] = self._phone
+        if self._email:     self._serialized['email'] = self._email
+        if self._url:       self._serialized['url'] = self._url
+        if self._descr:     self._serialized['descr'] = self._descr
+        if self._rating:    self._serialized['rating'] = self._rating
+        if self._reviews:   self._serialized['reviews'] = self._reviews
+
+
              
       
-    def setAttrs (self, name, category, createdBy, address=None, latlon=None, phone=None, email=None, url=None, descr=None, rating=None, reviews=None):
-        self._name = name
-        self._category = category
-        self._createdBy = createdBy
-        self._address = address
-        self._latlon = latlon
-        self._phone = phone
-        self._email = email
-        self._url = url
-        self._descr = descr
-        self._rating = rating
-        self._reviews = reviews
+    def setAttrs (self, *reqd_args, **keywords): 
+        self._name = reqd_args[0]
+        self._category = reqd_args[1]
+        self._createdBy = reqd_args[2]
+        if keywords.has_key('address'): self._address = keywords['address']
+        if keywords.has_key('latlon'):  self._latlon = keywords['latlon']
+        if keywords.has_key('phone'):   self._phone = keywords['phone']
+        if keywords.has_key('email'):   self._email = keywords['email']
+        if keywords.has_key('url'):     self._url = keywords['url']
+        if keywords.has_key('descr'):   self._descr = keywords['descr']
+        if keywords.has_key('rating'):  self._rating = keywords['rating']
+        if keywords.has_key('reviews'): self._reviews = keywords['reviews']
         
-        if address == None and latlon == None:
+        if self._address == None and self._latlon == None:
             raise AttributeError, "One of address or latlon required"
         
-        if category not in CATEGORIES:
+        if self._category not in CATEGORIES:
             raise AttributeError,"Invalid category"
         
         # Uniqueness is defined by concatenating the name&category 
         # strings and using this as the "primary key"
         self._pk = genPK(self._name, self._category)
-        self._serialized = dict(name=self._name,
-                                category=self._category,
-                                createdBy=self._createdBy,
-                                address=self._address,
-                                lat = (self._latlon._lat if self._latlon else None),
-                                lon = (self._latlon._lon if self._latlon else None),
-                                phone=self._phone,
-                                email=self._email,
-                                url=self._url,
-                                descr=self._descr,
-                                rating=self._rating,
-                                reviews=self._reviews)    
-        
-        def serialize(self):
-            self._serialized = dict(name=self._name,
-                                    category=self._category,
-                                    createdBy=self._createdBy,
-                                    address=self._address,
-                                    lat = (self._latlon._lat if self._latlon else None),
-                                    lon = (self._latlon._lon if self._latlon else None),
-                                    phone=self._phone,
-                                    email=self._email,
-                                    url=self._url,
-                                    descr=self._descr,
-                                    rating=self._rating,
-                                    reviews=self._reviews)  
+        self.serialize()
 
 
    
