@@ -134,7 +134,7 @@ class Test(unittest.TestCase):
         self.assertEqual(rtn['address'], item['address'], "mismatched address: %s != %s" % (rtn['address'], item['address']))
         
         
-    @unittest.skip("not yet implemented")
+"""
     def testPutExists(self):
         '''
         PUT == Create
@@ -143,7 +143,7 @@ class Test(unittest.TestCase):
         '''
         self.fail("not yet implemented")
 
-    @unittest.skip("not yet implemented")
+   
     def testPutMultiple(self):
         '''
         Only allowed to PUT single items
@@ -151,7 +151,7 @@ class Test(unittest.TestCase):
         '''
         self.fail("not yet implemented")
 
-    @unittest.skip("not yet implemented")
+   
     def testPost(self):
         '''
         Post == Update
@@ -161,7 +161,7 @@ class Test(unittest.TestCase):
         '''
         self.fail("not yet implemented")
     
-    @unittest.skip("not yet implemented")    
+        
     def testPostMultiple(self):
         '''
         Only allowed to POST single items
@@ -169,7 +169,7 @@ class Test(unittest.TestCase):
         '''
         self.fail("not yet implemented")
     
-    @unittest.skip("not yet implemented")
+    
     def testDelete(self):
         '''
         Send a json that represents an existing item
@@ -178,7 +178,7 @@ class Test(unittest.TestCase):
         '''
         self.fail("not yet implemented")
 
-    @unittest.skip("not yet implemented")
+    
     def testDeleteDoesntExists(self):
         '''
         Send a json that represents an item that doesnt exist
@@ -186,14 +186,14 @@ class Test(unittest.TestCase):
         '''
         self.fail("not yet implemented")
 
-    @unittest.skip("not yet implemented")
+    
     def testDeleteMultiple(self):
         '''
         Only allowed to DELETE single items
         Do we get the right error code back if we try multples?
         '''
         self.fail("not yet implemented")
-
+"""
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
