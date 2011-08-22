@@ -122,6 +122,7 @@ class Test(unittest.TestCase):
                 % ("Knox Stone NY19", "Historical", "HenryKnox", "1258 Hwy 9, Cohoes, NY 12047, USA", 42.8014, -73.7336)     
         dbConnMock = Mock()
         dbConnMock.write.return_value = None
+        dbConnMock.read.return_value = None
         
         # given that simpleDB is 'eventual consistency', doing the put and immediate get probably wouldn't work
         # for real. Given this is using mocks, probably OK.
@@ -134,20 +135,28 @@ class Test(unittest.TestCase):
         self.assertEqual(rtn['address'], item['address'], "mismatched address: %s != %s" % (rtn['address'], item['address']))
         
         
-"""
+
     def testPutExists(self):
         '''
         PUT == Create
-        SEnd a json that represents an item that already exists
-        Do we get back the right error code?
+        Trying to create an item that already exists is an error
         '''
-        self.fail("not yet implemented")
+        jsonInput = '{\"pk\": \"%s\", \"name\": \"%s\", \"category\":\"%s\" , \"createdBy\":\"%s\" , \"address\":\"%s\"}' \
+                % (self._item1['pk'], self._item1['name'], self._item1['category'], self._item1['createdBy'], self._item1['address'])
+        dbConnMock = Mock()
+        dbConnMock.read.return_value = [self._item1JsonRtn]
+        dbConnMock.write.return_value = None
+        
+        self.assertRaises(AttributeError, self._bl.PUT, jsonInput, dbConnMock)
+        
+        
 
-   
+
+"""   
     def testPutMultiple(self):
         '''
         Only allowed to PUT single items
-        Do we get the right error code back if we try multples?
+        Do we get the right error code back if we try multiples?
         '''
         self.fail("not yet implemented")
 

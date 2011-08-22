@@ -81,7 +81,7 @@ class BizLayer():
     def PUT(self, jsonitem=None, dbconn=None):
         '''
         PUT == Create
-        djsonize the supplied item, get a dbConnection, see if the item already exists. If it does, update it
+        djsonize the supplied item, get a dbConnection, see if the item already exists. If it does, fail
         if it doesnt, insert it.
         '''
         # the input here can't come on the URL; has to come via the post packaging mechanism
@@ -91,11 +91,11 @@ class BizLayer():
         item = Item.ThingToDo()
         itemData = json.JSONDecoder().decode(jsonitem)
         
-        if itemData['lat'] and itemData['lon']:
+        if 'lat' in itemData and 'lon' in itemData:
             itemData['latlon'] = Item.LatLon(itemData['lat'], itemData['lon'])
             
         # name, category and createdBy are required
-        if not (itemData['name'] and itemData['category'] and itemData['createdBy']):
+        if not ('name' in itemData and 'category' in itemData and 'createdBy' in itemData):
             raise AttributeError
         
         otherArgs = {}
@@ -107,7 +107,23 @@ class BizLayer():
             otherArgs[attr] = val
         item.setAttrs(itemData['name'], itemData['category'], itemData['createdBy'], **otherArgs)
         
-        # now that we have an item, write it to the dbconn
+        # If the item already exists, that's an error - caller should be using POST, not PUT
+        # Make the PK and see if it exists. AttributeError if it does
+        PK = Item.genPK(itemData['name'], itemData['category'])
+        searchFor = Item.SearchFor()
+        searchFor.setAttr('pk', PK)
+        where = searchFor.makeWhereClause()
+        
+        try:
+            rtn = dbconn.read(where)
+        except:
+            print "Unexpected error in checking for existing record - %s" % sys.exc_info()[0]
+            return
+        if rtn != None:
+            raise AttributeError
+            return
+        
+        # now that we have an item that doesn't exist, write it to the dbconn
         try:
             dbconn.write(item._pk, item._serialized)
         except:
