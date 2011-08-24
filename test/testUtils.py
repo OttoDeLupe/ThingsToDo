@@ -22,7 +22,7 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(9, len(self.testData._testData), "incorrect number of items in test data")
 
     def testPKValid(self):
-        self.assertIsNotNone(self.testData)
+        self.assertNotEqual(self.testData, None)
         for d in self.testData._testData:
             self.assertEqual(Item.genPK(d['name'], d['category']), d['pk'], "invalid PK")
     
