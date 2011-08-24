@@ -20,66 +20,57 @@ class ThingToDo():
     '''
     
     def __init__(self):
-        self._serialized = None
-        self._pk = None
-        self._name = None
-        self._category = None
-        self._createdBy = None
-        self._address = None
-        self._latlon = None
-        self._phone = None
-        self._email = None
-        self._url = None
-        self._descr = None
-        self._rating = None
-        self._reviews = None
-
-    def serialize(self):
         self._serialized = {}
-        if self._name:      self._serialized['name'] = self._name
-        if self._category:  self._serialized['category'] = self._category
-        if self._createdBy: self._serialized['createdBy'] = self._createdBy
-        if self._address:   self._serialized['address'] = self._address
-        if self._latlon:
-            self._serialized['lat'] = self._latlon._lat
-            self._serialized['lon'] = self._latlon._lon
-        if self._phone:     self._serialized['phone'] = self._phone
-        if self._email:     self._serialized['email'] = self._email
-        if self._url:       self._serialized['url'] = self._url
-        if self._descr:     self._serialized['descr'] = self._descr
-        if self._rating:    self._serialized['rating'] = self._rating
-        if self._reviews:   self._serialized['reviews'] = self._reviews
 
-
-             
-      
     def setAttrs (self, *reqd_args, **keywords): 
-        self._name = reqd_args[0]
-        self._category = reqd_args[1]
-        self._createdBy = reqd_args[2]
-        if keywords.has_key('address'): self._address = keywords['address']
-        if keywords.has_key('latlon'):  self._latlon = keywords['latlon']
-        if keywords.has_key('phone'):   self._phone = keywords['phone']
-        if keywords.has_key('email'):   self._email = keywords['email']
-        if keywords.has_key('url'):     self._url = keywords['url']
-        if keywords.has_key('descr'):   self._descr = keywords['descr']
-        if keywords.has_key('rating'):  self._rating = keywords['rating']
-        if keywords.has_key('reviews'): self._reviews = keywords['reviews']
-        
-        if self._address == None and self._latlon == None:
+        self._serialized['name']      = reqd_args[0]
+        self._serialized['category']  = reqd_args[1]
+        self._serialized['createdBy'] = reqd_args[2]
+        if 'address' in keywords: self._serialized['address'] = keywords['address'] 
+        if 'phone'   in keywords: self._serialized['phone']   = keywords['phone'] 
+        if 'email'   in keywords: self._serialized['email']   = keywords['email']   
+        if 'url'     in keywords: self._serialized['url']     = keywords['url']    
+        if 'descr'   in keywords: self._serialized['descr']   = keywords['descr'] 
+        if 'rating'  in keywords: self._serialized['rating']  = keywords['rating']   
+        if 'review'  in keywords: self._serialized['review']  = keywords['review']
+        if 'latlon'  in keywords:
+            self._serialized['lat'] = keywords['latlon']._lat
+            self._serialized['lon'] = keywords['latlon']._lon
+          
+        # Either address or lat/lon is required
+        if ('address' not in self._serialized) and ('lat' not in self._serialized) and ('lon' not in self._serialized):
             raise AttributeError, "One of address or latlon required"
         
-        if self._category not in CATEGORIES:
+        if self._serialized['category'] not in CATEGORIES:
             raise AttributeError,"Invalid category"
         
         # Uniqueness is defined by concatenating the name&category 
         # strings and using this as the "primary key"
-        self._pk = genPK(self._name, self._category)
-        self.serialize()
+        self._serialized['pk'] = genPK(self._serialized['name'], self._serialized['category'])
 
-
-   
-  
+    def getName(self):
+        return self._serialized['name']
+    def getCategory(self):
+        return self._serialized['category']
+    def getCreatedBy(self):
+        return self._serialized['createdBy']
+    def getAddress(self):
+        return self._serialized['address']
+    def getPhone(self):
+        return self._serialized['phone']
+    def getEmail(self):
+        return self._serialized['email']
+    def getDescr(self):
+        return self._serialized['descr']
+    def getUrl(self):
+        return self._serialized['url']
+    def getRating(self):
+        return self._serialized['rating']
+    def getReview(self):
+        return self._serialized['review']
+    def getLatLon(self):
+        return LatLon(self._serialized['lat'], self._serialized['lon'])
+    
 class LatLon():
     def __init__(self,lat,lon):
         self._lat = lat
@@ -132,8 +123,8 @@ class SearchFor():
         selectStr = ""
         # check to see if theres a latlon attr. 
         # If so, there must be a offset attr; otherwise throw exception
-        if self._criteria.has_key('latlon'):
-            assert(self._criteria.has_key('offset'))
+        if 'latlon' in self._criteria:
+            assert('offset' in self._criteria)
             ll = self._criteria['latlon']
             ll.boundingBox(self._criteria['offset'])
 

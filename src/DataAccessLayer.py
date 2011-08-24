@@ -37,8 +37,8 @@ class DataAccessLayer():
             resultIter = self._domain.select(select)
         except boto.exception.SDBResponseError, e:
             print "SDBResponseError in read: %s, %s" % (e.status, e.reason)
-        except:
-            print "Unexpected error in read - %s" % sys.exc_info()[0]
+        except Exception as ex:
+            print 'Unexpected error in read - ', ex
             raise
         rs = []
         try:  
@@ -46,23 +46,24 @@ class DataAccessLayer():
                 rs.append(r)
         except boto.exception.SDBResponseError, e:
             print "SDBResponseError in read: %s, %s" % (e.status, e.reason)
-        except:
-            print "Unexpected error in read - %s" % sys.exc_info()[0]
+        except Exception as ex:
+            print 'Unexpected error in read - ', ex
             raise
         return rs
         
         
-    def write(self, key, item):
+    def write(self, item):
         '''
         item will be a dict
         if the key already exists, then the values are updated
         if the key doesn't exist, it's created and then the values added
         '''
         # does key already exist?
+        key = item['pk']
         try:
             foundrow = self._domain.get_item(key)
-        except:
-            print "Unexpected error in write - %s" % sys.exc_info()[0]
+        except Exception as ex:
+            print 'Unexpected error in write - ', ex
             raise
         
         if foundrow:
@@ -82,8 +83,8 @@ class DataAccessLayer():
         # does key already exist?
         try:
             foundrow = self._domain.get_item(key)
-        except:
-            print "Unexpected error in delete - %s" % sys.exc_info()[0]
+        except Exception as ex:
+            print 'Unexpected error in delete -', ex
             raise
         
         if foundrow:

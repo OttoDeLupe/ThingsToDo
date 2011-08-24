@@ -6,6 +6,7 @@ Created on Jun 28, 2011
 import unittest
 import Item
 import sys
+import Utils
 #import DataAccessLayer
 
 class ItemTest(unittest.TestCase):
@@ -13,6 +14,7 @@ class ItemTest(unittest.TestCase):
 
     def setUp(self):
         _dbConn = None
+        self.testData = Utils.Utils();
 
 
     def tearDown(self):
@@ -26,52 +28,52 @@ class ItemTest(unittest.TestCase):
 # - Category
 ###
     def testInstantiateItemWithAddress(self):
-        name = "Weir Hill"
-        createdBy = "Ottodelupe"
-        category = "Recreational"
-        otherArgs = {'address':"Stevens Street North Andover, MA"}
+        name = self.testData._testData[3]['name']
+        createdBy = self.testData._testData[3]['createdBy']
+        category = self.testData._testData[3]['category']
+        otherArgs = {'address':self.testData._testData[3]['address']}
         try:
             item = Item.ThingToDo()
             self.assertTrue(item)
             item.setAttrs(name,category,createdBy,**otherArgs)
 
         except AssertionError:
-            print "problem creating Item"
+            self.fail("Assertion Error creating Item")
         except:
-            print "problem creating item - %s" % sys.exc_info()[0] 
+            self.fail("problem creating item - %s" % sys.exc_info()[0]) 
         
-        self.assertEquals(item._name, name, "names don't match: %s != %s" % (item._name, name))
-        self.assertEquals(item._category, category, "categories don't match: %s != %s" % (item._category, category))
-        self.assertEquals(item._address, otherArgs['address'], "addresses don't match: %s != %s" % (item._address, otherArgs['address']))
+        self.assertEquals(item.getName(), name, "names don't match: %s != %s" % (item.getName(), name))
+        self.assertEquals(item.getCategory(), category, "categories don't match: %s != %s" % (item.getCategory(), category))
+        self.assertEquals(item.getAddress(), otherArgs['address'], "addresses don't match: %s != %s" % (item.getAddress(), otherArgs['address']))
         
     def testInstantiateItemWithLatLon(self):
-        ll = Item.LatLon(42.697, -71.110)
-        name = "Weir Hill"
-        createdBy = "Ottodelupe"
-        category = "Recreational"
+        ll = Item.LatLon(self.testData._testData[3]['lat'], self.testData._testData[3]['lon'])
+        name = self.testData._testData[3]['name']
+        createdBy = self.testData._testData[3]['createdBy']
+        category = self.testData._testData[3]['category']
         otherArgs = {'latlon':ll}
         try:
             item = Item.ThingToDo()
             self.assertTrue(item)
             item.setAttrs(name,category,createdBy,**otherArgs)  
         except AssertionError:
-            print "problem creating Item"
+            self.fail("Assertion Error creating Item")
         except:
-            print "problem creating item - %s" % sys.exc_info()[0] 
+            self.fail("problem creating item - %s" % sys.exc_info()[0]) 
         
-        self.assertEquals(item._name, name, "names don't match: %s != %s" % (item._name, name))
-        self.assertEquals(item._category, category, "categories don't match: %s != %s" % (item._category, category))
-        self.assertEquals(item._latlon._lat, ll._lat, "lats don't match: %s != %s" % (item._latlon._lat, ll._lat))
-        self.assertEquals(item._latlon._lon, ll._lon, "lons don't match: %s != %s" % (item._latlon._lon, ll._lon))
+        self.assertEquals(item.getName(), name, "names don't match: %s != %s" % (item.getName(), name))
+        self.assertEquals(item.getCategory(), category, "categories don't match: %s != %s" % (item.getCategory(), category))
+        self.assertEquals(item.getLatLon()._lat, ll._lat, "lats don't match: %s != %s" % (item.getLatLon()._lat, ll._lat))
+        self.assertEquals(item.getLatLon()._lon, ll._lon, "lons don't match: %s != %s" % (item.getLatLon()._lon, ll._lon))
         
     def testInstantiateItemMaxArgs(self):
-        ll = Item.LatLon(42.697, -71.110)
-        tele = "978.682.3580"
-        addr = "Stevens Street North Andover, MA"
-        website = "http://www.thetrustees.org/places-to-visit/northeast-ma/weir-hill.html"
-        name = "Weir Hill"
-        createdBy = "Ottodelupe"
-        category = "Recreational"
+        ll = Item.LatLon(self.testData._testData[3]['lat'], self.testData._testData[3]['lon'])
+        name = self.testData._testData[3]['name']
+        createdBy = self.testData._testData[3]['createdBy']
+        category = self.testData._testData[3]['category']
+        tele = self.testData._testData[3]['phone']
+        addr = self.testData._testData[3]['address']
+        website = self.testData._testData[3]['url']
         otherArgs = {'latlon': ll, 'phone':tele, 'address':addr, 'url':website}
         try:
             item = Item.ThingToDo()
@@ -79,26 +81,26 @@ class ItemTest(unittest.TestCase):
             item.setAttrs(name,category,createdBy, **otherArgs)
 
         except AssertionError:
-            print "problem creating Item"
+            self.fail("Assertion Error creating Item")
         except:
-            print "problem creating item - %s" % sys.exc_info()[0] 
+            self.fail("problem creating item - %s" % sys.exc_info()[0]) 
         
-        self.assertEquals(item._name, name, "names don't match: %s != %s" % (item._name, name))
-        self.assertEquals(item._category, category, "categories don't match: %s != %s" % (item._category, category))
-        self.assertEquals(item._latlon._lat, ll._lat, "lats don't match: %s != %s" % (item._latlon._lat, ll._lat))
-        self.assertEquals(item._latlon._lon, ll._lon, "lons don't match: %s != %s" % (item._latlon._lon, ll._lon))
-        self.assertEquals(item._phone, tele, "telephone #s don't match: %s != %s" % (item._phone, tele))
-        self.assertEquals(item._address, addr, "addresses don't match: %s != %s" % (item._address, addr))
-        self.assertEquals(item._url, website, "names don't match: %s != %s" % (item._url, website))
+        self.assertEquals(item.getName(), name, "names don't match: %s != %s" % (item.getName(), name))
+        self.assertEquals(item.getCategory(), category, "categories don't match: %s != %s" % (item.getCategory(), category))
+        self.assertEquals(item.getLatLon()._lat, ll._lat, "lats don't match: %s != %s" % (item.getLatLon()._lat, ll._lat))
+        self.assertEquals(item.getLatLon()._lon, ll._lon, "lons don't match: %s != %s" % (item.getLatLon()._lon, ll._lon))
+        self.assertEquals(item.getPhone(), tele, "telephone #s don't match: %s != %s" % (item.getPhone(), tele))
+        self.assertEquals(item.getAddress(), addr, "addresses don't match: %s != %s" % (item.getAddress(), addr))
+        self.assertEquals(item.getUrl(), website, "names don't match: %s != %s" % (item.getUrl(), website))
 ### 
 # Requirement: Unable to create an item when minimum attributes NOT specified
 ###  
     def testInstantiateItemMissingArgs(self):
-        tele = "978.682.3580"
-        website = "http://www.thetrustees.org/places-to-visit/northeast-ma/weir-hill.html"
-        name = "Weir Hill"
-        createdBy = "Ottodelupe"
-        category = "Recreational"
+        name = self.testData._testData[3]['name']
+        createdBy = self.testData._testData[3]['createdBy']
+        category = self.testData._testData[3]['category']
+        tele = self.testData._testData[3]['phone']
+        website = self.testData._testData[3]['url']
         otherArgs = {'phone':tele, 'url':website}
         # missing address AND latlon
         item = Item.ThingToDo()
@@ -109,54 +111,52 @@ class ItemTest(unittest.TestCase):
 # Requirement: Only enumerated categories allowed
 ###
     def testInstantiateItemBogusCategory(self):
-        name = "Weir Hill"
-        createdBy = "Ottodelupe"
+        name = self.testData._testData[3]['name']
+        createdBy = self.testData._testData[3]['createdBy']
         category = "Nonsense"
-        addr = "Stevens Street North Andover, MA"
-        otherArgs = {'address': addr}
+        otherArgs = {'address':self.testData._testData[3]['address']}
         
         item = Item.ThingToDo()
         self.assertRaises(AttributeError, item.setAttrs, name,category,createdBy, **otherArgs)
             
 ###
-# Requirement: Be able to serialize and deserialize an item
+# Requirement: Be able to create an item with all args
 ###
-    def testSerialize(self):
-        ll = Item.LatLon(42.697, -71.110)
-        tele = "978.682.3580"
-        addr = "Stevens Street North Andover, MA"
-        website = "http://www.thetrustees.org/places-to-visit/northeast-ma/weir-hill.html"
-        name = "Weir Hill"
-        createdBy = "Ottodelupe"
-        category = "Recreational"
-        mail = None
-        rate = None
-        revs = None
-        description = None
+    def testCreateAllArgs(self):
+        ll = Item.LatLon(self.testData._testData[0]['lat'], self.testData._testData[0]['lon'])
+        name = self.testData._testData[0]['name']
+        createdBy = self.testData._testData[0]['createdBy']
+        category = self.testData._testData[0]['category']
+        tele = self.testData._testData[0]['phone']
+        addr = self.testData._testData[0]['address']
+        website = self.testData._testData[0]['url']
+        mail = self.testData._testData[0]['email']
+        rate = self.testData._testData[0]['rating']
+        revs = self.testData._testData[0]['review']
+        description = self.testData._testData[0]['url']
         otherArgs = {'latlon':ll, 'phone':tele, 'address':addr, 'url':website, 'email':mail, 'rating':rate,
-                     'reviews':revs, 'descr':description}
+                     'review':revs, 'descr':description}
         try:
             item = Item.ThingToDo()
             self.assertTrue(item)
             item.setAttrs(name,category,createdBy,**otherArgs)
         except AssertionError:
-            print "problem creating Item"
-            return
+            self.fail("Assertion Error creating Item")
         except:
-            print "problem creating item - %s" % sys.exc_info()[0] 
+            self.fail("problem creating item - %s" % sys.exc_info()[0]) 
         
-        self.assertEqual(item._serialized['phone'], tele)
-        self.assertEqual(item._serialized['address'], addr)
-        self.assertEqual(item._serialized['url'], website)
-        self.assertEqual(item._serialized['name'], name)
-        self.assertEqual(item._serialized['createdBy'], createdBy)
-        self.assertEqual(item._serialized['category'], category)
-#        self.assertRaises(KeyError, item._serialized['email'])
-#        self.assertRaises(KeyError, item._serialized['descr'])
-#        self.assertRaises(KeyError, item._serialized['rating'])
-#        self.assertRaises(KeyError, item._serialized['reviews'])
-        self.assertEqual(item._serialized['lat'], ll._lat)
-        self.assertEqual(item._serialized['lon'], ll._lon)
+        self.assertEqual(item.getPhone(), tele)
+        self.assertEqual(item.getAddress(), addr)
+        self.assertEqual(item.getUrl(), website)
+        self.assertEqual(item.getName(), name)
+        self.assertEqual(item.getCreatedBy(), createdBy)
+        self.assertEqual(item.getCategory(), category)
+        self.assertEqual(item.getEmail(), mail)
+        self.assertEqual(item.getDescr(), description)
+        self.assertEqual(item.getRating(), rate)
+        self.assertEqual(item.getReview(), revs)
+        self.assertEqual(item.getLatLon()._lat, ll._lat)
+        self.assertEqual(item.getLatLon()._lon, ll._lon)
         
 
 ###

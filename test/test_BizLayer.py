@@ -5,45 +5,22 @@ Created on Jul 21, 2011
 '''
 import unittest
 import BizLayer
-from Item import genPK
 import json
 from mock import Mock
+import Utils
 
 class Test(unittest.TestCase):
 
-
+    def ConvertTestDataToJson(self, testDataList):
+        jsonData = []
+        for d in testDataList:
+            jsonData.append(d)
+        return jsonData 
+            
     def setUp(self):
         self._bl = BizLayer.BizLayer()
-        self._item1Review1 = "Nice place - 3x18 courses to choose from"
-        self._item1Review2 = "visited on weekend. 45m wait for tee"
-        self._item1 = {'name':"Far Corner Golf Course", 'category':"Recreational",'createdBy':"Ottodelupe", 
-                      'address':"5 Barker Road, Boxford, MA", 'phone':"978 352 8300", 'descr':"Championship set of courses",
-                      'url':"http://www.farcornergolf.com", 'email':"farcornergolfclub@comcast.net",
-                      'lat':42.7288, 'lon':-71.0775,
-                      'rating':"5", 'reviews':[self._item1Review1, self._item1Review2]}
-        self._item1['pk'] = genPK(self._item1['name'], self._item1['category'])
-        self._item1JsonRtn = {'pk': self._item1['pk'], 'name': self._item1['name'], 'category':self._item1['category'], 
-                            'createdBy':self._item1['createdBy'], 'address':self._item1['address'], 'phone':self._item1['phone'],
-                            'descr':self._item1['descr'], 'url':self._item1['url'], 'email':self._item1['email'],
-                            'lat':self._item1['lat'], 'lon':self._item1['lon'], 'rating':self._item1['rating'],
-                            'reviews':self._item1['reviews']}
-        
-        self._item2Review1 = "not bad for so close to civilization"
-        self._item2Review2 = "lots of urban folks spoil the natural beauty"
-        self._item2 = {'name':"Harold Parker State Forest", 'category':"Recreational", 'createdBy':"Ottodelupe", 
-                      'address':"133 Jenkins Road, Andover, MA", 'phone':"978 686 3391", 
-                      'lat':42.6129, 'lon':-71.0915, # per cargps, pkg lot at 42-36-47, -71-05-25
-                      'url':"http://www.mass.gov/dcr/parks/northeast/harp.htm",
-                      'descr':"Deep woods with many trails. Some camping sites available",
-                      'rating':"4",
-                      'reviews':[self._item2Review1, self._item2Review2]}
-        self._item2['pk'] = genPK(self._item2['name'], self._item2['category'])
-        self._item2JsonRtn = {'pk': self._item2['pk'], 'name': self._item2['name'], 'category':self._item2['category'], 
-                            'createdBy':self._item2['createdBy'], 'address':self._item2['address'], 'phone':self._item2['phone'],
-                            'descr':self._item2['descr'], 'url':self._item2['url'],
-                            'lat':self._item2['lat'], 'lon':self._item2['lon'], 'rating':self._item2['rating'],
-                            'reviews':self._item2['reviews']}
-
+        self.testData = Utils.Utils();
+        self.testJsonRtn = self.ConvertTestDataToJson(self.testData._testData)
         
     def tearDown(self):
         pass
@@ -63,19 +40,26 @@ class Test(unittest.TestCase):
         arg to the biz layer get call. biz layer get uses the mock instead of 
         creating a real dbconn to read from
         '''
+        name = self.testData._testData[0]['name']
+        pk = self.testData._testData[0]['pk']
+        category = self.testData._testData[0]['category']
+        createdBy = self.testData._testData[0]['createdBy']
+        address = self.testData._testData[0]['address']
+        phone = self.testData._testData[0]['phone']
+        
         jsonInput = '{\"pk\": \"%s\", \"name\": \"%s\", \"category\":\"%s\" , \"createdBy\":\"%s\" , \"address\":\"%s\"}' \
-                % (self._item1['pk'], self._item1['name'], self._item1['category'], self._item1['createdBy'], self._item1['address'])
+                % (pk, name, category , createdBy, address)
         dbConnMock = Mock()
-        dbConnMock.read.return_value = [self._item1JsonRtn]
+        dbConnMock.read.return_value = [self.testJsonRtn[0]]
                 
         rtnJson = self._bl.GET(jsonInput, dbConnMock)
         rtn = json.JSONDecoder().decode(rtnJson)
-        self.assertEqual(rtn[0]['pk'], self._item1['pk'], "PK mismatch")
-        self.assertEqual(rtn[0]['name'], self._item1['name'], "name mismatch")
-        self.assertEqual(rtn[0]['category'], self._item1['category'], "category mismatch")
-        self.assertEqual(rtn[0]['createdBy'], self._item1['createdBy'], "createdBy mismatch")
-        self.assertEqual(rtn[0]['phone'], self._item1['phone'], "phone mismatch")
-        self.assertEqual(rtn[0]['address'], self._item1['address'], "address mismatch")
+        self.assertEqual(rtn[0]['pk'],        pk, "PK mismatch")
+        self.assertEqual(rtn[0]['name'],      name, "name mismatch")
+        self.assertEqual(rtn[0]['category'],  category, "category mismatch")
+        self.assertEqual(rtn[0]['createdBy'], createdBy, "createdBy mismatch")
+        self.assertEqual(rtn[0]['phone'],     phone, "phone mismatch")
+        self.assertEqual(rtn[0]['address'],   address, "address mismatch")
         
     def testGetMultipleItems(self):
         '''
@@ -84,7 +68,7 @@ class Test(unittest.TestCase):
         '''
         jsonInput = '{\"category\":\"%s\", \"lat\":%f, \"lon\":%f}' % ("Recreational", 42.7079, -71.1278)
         dbConnMock = Mock()
-        dbConnMock.read.return_value = [self._item1JsonRtn, self._item2JsonRtn]
+        dbConnMock.read.return_value = [self.testJsonRtn[0], self.testJsonRtn[1]]
         
         rtnJson = self._bl.GET(jsonInput, dbConnMock)
         rtn = json.JSONDecoder().decode(rtnJson)
@@ -97,29 +81,35 @@ class Test(unittest.TestCase):
         json search criteria that returns single item, but that item has mulitple reviews
         Does the returned json have the right set of reviews?
         '''
-        jsonInput = '{\"category\":\"%s\",\"name\":\"%s\"}' % (self._item1['category'], self._item1['name'])
+        category = self.testData._testData[0]['category']
+        name = self.testData._testData[0]['name']
+        jsonInput = '{\"category\":\"%s\",\"name\":\"%s\"}' % (category, name)
         dbConnMock = Mock()
-        dbConnMock.read.return_value = [self._item1JsonRtn]
+        dbConnMock.read.return_value = [self.testJsonRtn[0]]
         
         rtnJson = self._bl.GET(jsonInput, dbConnMock)
         rtn = json.JSONDecoder().decode(rtnJson)
-        self.assertEqual(rtn[0]['reviews'][0], self._item1Review1, "mismatched review 1")
-        self.assertEqual(rtn[0]['reviews'][1], self._item1Review2, "mismatched review 2")
+        self.assertEqual(rtn[0]['review'][0], self.testData._testData[0]['review'][0], "mismatched review %s vs %s" % (rtn[0]['review'][0], self.testData._testData[0]['review'][0]))
+        self.assertEqual(rtn[0]['review'][1], self.testData._testData[0]['review'][1], "mismatched review %s vs %s" % (rtn[0]['review'][1], self.testData._testData[0]['review'][1]))
         
     def testPut(self):
         '''
         PUT == Create
         Send a json that represents a new item
-        Does the lat/lon get geocoded properly?
         If so, do a get and make sure that the returned json matches the json sent in
         '''
         # Used http://www.getaddress.net/ to do the geocoding of the below lat/lon
         # expectation is that geocoding is done on client side, and address plus lat/lon are
         # sent to server side when item is created.
-        item = {'name':"Knox Stone NY19", 'category':"Historical", 'createdBy':"HenryKnox", 'lat':42.8014,
-                'lon':-73.7336, 'address':"1258 Hwy 9, Cohoes, NY 12047, USA"}
+        name = self.testData._testData[2]['name']
+        category = self.testData._testData[2]['category']
+        createdBy = self.testData._testData[2]['createdBy']
+        address = self.testData._testData[2]['address']
+        lat = float(self.testData._testData[2]['lat'])
+        lon = float(self.testData._testData[2]['lon'])
+        
         jsonInput = '{\"name\":\"%s\", \"category\":\"%s\", \"createdBy\":\"%s\", \"address\":\"%s\", \"lat\":%f, \"lon\":%f}' \
-                % ("Knox Stone NY19", "Historical", "HenryKnox", "1258 Hwy 9, Cohoes, NY 12047, USA", 42.8014, -73.7336)     
+                % (name, category, createdBy, address, lat, lon)     
         dbConnMock = Mock()
         dbConnMock.write.return_value = None
         dbConnMock.read.return_value = None
@@ -130,9 +120,9 @@ class Test(unittest.TestCase):
         rtn = json.JSONDecoder().decode(rtnJson)
         # PK doesn't come back as part of the json. So compare name & category
         # Unlike get, which can return 1 or more items, put only returns 1
-        self.assertEqual(rtn['name'], item['name'],"mismatched name: %s != %s" % (rtn['name'], item['name']))
-        self.assertEqual(rtn['category'], item['category'],"mismatched category: %s != %s" % (rtn['category'], item['category']))
-        self.assertEqual(rtn['address'], item['address'], "mismatched address: %s != %s" % (rtn['address'], item['address']))
+        self.assertEqual(rtn['name'], name,"mismatched name: %s != %s" % (rtn['name'], name))
+        self.assertEqual(rtn['category'], category,"mismatched category: %s != %s" % (rtn['category'], category))
+        self.assertEqual(rtn['address'], address, "mismatched address: %s != %s" % (rtn['address'], address))
         
         
 
@@ -141,10 +131,15 @@ class Test(unittest.TestCase):
         PUT == Create
         Trying to create an item that already exists is an error
         '''
+        pk = self.testData._testData[0]['pk']
+        name = self.testData._testData[0]['name']
+        category = self.testData._testData[0]['category']
+        createdBy = self.testData._testData[0]['createdBy']
+        address = self.testData._testData[0]['address']
         jsonInput = '{\"pk\": \"%s\", \"name\": \"%s\", \"category\":\"%s\" , \"createdBy\":\"%s\" , \"address\":\"%s\"}' \
-                % (self._item1['pk'], self._item1['name'], self._item1['category'], self._item1['createdBy'], self._item1['address'])
+                % (pk, name, category, createdBy, address)
         dbConnMock = Mock()
-        dbConnMock.read.return_value = [self._item1JsonRtn]
+        dbConnMock.read.return_value = [self.testJsonRtn[0]]
         dbConnMock.write.return_value = None
         
         self.assertRaises(AttributeError, self._bl.PUT, jsonInput, dbConnMock)

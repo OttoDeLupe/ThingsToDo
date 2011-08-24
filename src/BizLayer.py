@@ -60,8 +60,9 @@ class BizLayer():
         
         try:
             rtn = dbconn.read(where)
-        except:
-            print "Unexpected error in read - %s" % sys.exc_info()[0]
+        except Exception as ex:
+            print 'Unexpected error in read -', ex
+            raise
             
         # how are status codes set?
         return json.JSONEncoder().encode(rtn)
@@ -96,7 +97,7 @@ class BizLayer():
             
         # name, category and createdBy are required
         if not ('name' in itemData and 'category' in itemData and 'createdBy' in itemData):
-            raise AttributeError
+            raise AttributeError('Required attributes not supplied')
         
         otherArgs = {}
         for attr, val in itemData.iteritems():
@@ -116,8 +117,8 @@ class BizLayer():
         
         try:
             rtn = dbconn.read(where)
-        except:
-            print "Unexpected error in checking for existing record - %s" % sys.exc_info()[0]
+        except Exception as ex:
+            print 'Unexpected error in checking for existing record -', ex
             return
         if rtn != None:
             raise AttributeError
@@ -125,9 +126,10 @@ class BizLayer():
         
         # now that we have an item that doesn't exist, write it to the dbconn
         try:
-            dbconn.write(item._pk, item._serialized)
-        except:
-            print "problem in PUT writing item - %s" % sys.exc_info()[0]
+            dbconn.write(item._serialized)
+        except Exception as ex:
+            print 'problem in PUT writing item - ', ex
+            raise 
         
         return json.JSONEncoder().encode(item._serialized)
             
@@ -141,21 +143,6 @@ class BizLayer():
         delete it
         '''
         pass
-
-        
-    def write(self, item):
-        '''
-        The caller will have unpacked the data from the REST API and created an Item
-        This function then gets a db connection and writes the item to it
-        '''
-        self._DAL = DataAccessLayer.DataAccessLayer()
-        self.assertTrue(self._DAL)
-        
-        try:
-            self._DAL.write(item._pk, item._serialized)
-        except:
-            print "Unexpected error:", sys.exc_info()[0]
-            raise
 
 
 if __name__ == "__main__": app.run()
