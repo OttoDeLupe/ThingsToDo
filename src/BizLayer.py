@@ -2,72 +2,114 @@
 Created on Jul 18, 2011
 
 @author: papabear
-'''
-import DataAccessLayer
-import Item
-import sys
-import web
-import json
 
-urls = ('/', 'BizLayer')
-app = web.application(urls, globals())
-
-class BizLayer():
-    '''
     The top level API layer. Implements the REST interface. Creates Items,
     reads/writes from/to the DataAccessLayer. receives json, converts to
     Item, does some operation with the item (like uses it in a read or write
     call to the DAL), gets some item(s) back, puts this into a json and
     ships it back.
 
-    URIs: (1) item, (2) collection of items
+    URIs: (1) thing to do (t2d), (2) collection of t2d (t2dList)
     Format: JSON - value is string, unless otherwise noted
-     item = {"pk":value , "name":value , "category":value , "createdBy":value ,
+     t2d = {"pk":value , "name":value , "category":value , "createdBy":value ,
              "address":value , "lat":float_value, "lon":float_value, "phone":value ,
              "email":value , "url":value , "description":value , "rating":value
              "reviews": [{"review":value} , {"review":value} , ...]}
-     itemList = [item , item, item ...]
+     t2dList = [t2d , t2d, t2d ...]
 
-     item GET item format, status codes 200, 400, 404, 500
-     item POST item format status codes 200, 400, 403, 500
+     t2d GET t2d format, status codes 200, 400, 404, 500
+     t2d POST t2d format status codes 200, 400, 500
        -> Semantically, POST = Update
-     item PUT item format status codes 200, 400, 403, 500
+     t2d PUT t2d format status codes 200, 400, 500
        -> Semantically, PUT = Create
-     item DELETE item format status codes 200, 400, 403, 500
-     itemList GET itemList format status codes 200, 400, 403, 500
-     itemList POST/PUT/DELETE: status codes 403
-     -> Only allowed to create/update/delete individual items, not collections
+     t2d DELETE t2d format status codes 200, 400, 500
      
-    
-    '''
+     t2dList GET t2dList format status codes 200, 400, 500
+     t2dList POST/PUT/DELETE: status codes 405
+     -> Only allowed to create/update/delete individual t2d, not collections 
+'''
+import DataAccessLayer
+import Item
+import re
+import uuid
+import web
+import json
+import os
 
-    def GET(self, criteria=None, dbconn=None):
+urls = ('/t2d/(.*)', 't2d', '/t2dList', 't2dList')
+
+t2dApp = web.application(urls, globals())
+
+VALID_KEY = re.compile('[a-zA-Z0-9_-]{1,255}')
+def isValidKey(key):
+    """Checks to see if the parameter follows the allow pattern of
+    keys.
+    """
+    if VALID_KEY.match(key) is not None:
+        return True
+    return False
+
+def isTestMode():
+    if 'T2DTestMode' in os.environ:
+        return True
+    else:
+        return False
+
+def getByKeys(pk=None, attrs=None):
+    '''
+    help function used by t2d.GET and t2dList.GET to query
+    the data store & return what is found based on the 
+    key (PK) or attributes passed
+    '''
+    # using dbconn, read using the where clause
+    if isTestMode(): # check env. if in test mode, import dbconn mock
+        from test_BizLayer import dbConn
+    else:
+        dbConn = DataAccessLayer.DataAccessLayer()
+
+    searchFor = Item.SearchFor()
+    if pk is not None:
+        searchFor.setAttr('pk', pk)
+    elif attrs is not None:
+        for k, v in attrs.iteritems():
+            searchFor.setAttr(k, v)
+    else:
+        raise KeyError
+    where = searchFor.makeWhereClause()
+        
+    try:
+        rtn = dbConn.read(where)
+    except Exception as e:
+        raise e
+    return rtn
+
+
+  
+
+class t2d():
+    ''' REST interface implementing WebService methods for a Thing To Do (t2d)'''
+    def GET(self, resource):
         '''
         dejsonize the critieria, get a db connection, search for the criteria, get a list of
         matching items back, json-ize them, send them back to the client
         '''
-        if not criteria: criteria = web.input()
-        if not dbconn: self._DAL = DataAccessLayer.DataAccessLayer()
-        
-        # turn the criteria into an Item.searchFor, then into a where clause
-        # using dbconn, read using the where clause
-        searchFor = Item.SearchFor()
-        lookfor = json.JSONDecoder().decode(criteria)
-        
-        for attr, val in lookfor.iteritems():
-            searchFor.setAttr(attr, val)
-        where = searchFor.makeWhereClause()
+        if not isValidKey(resource):
+            web.badrequest()
+            return
         
         try:
-            rtn = dbconn.read(where)
-        except Exception as ex:
-            print 'Unexpected error in read -', ex
-            raise
+            rtn = getByKeys(resource)
+        except:
+            web.badrequest()
+            return
+
+        if rtn is None:
+            web.notfound()
             
-        # how are status codes set?
+        web.header('Content-Type', 'text/plain')
         return json.JSONEncoder().encode(rtn)
               
-
+"""
     def POST(self, jsonitem=None, dbconn=None):
         '''
         dejsonize the supplied item, get a dbconnection, find the corresponding record (POST = Update)
@@ -143,6 +185,51 @@ class BizLayer():
         delete it
         '''
         pass
+"""
 
+class t2dList():
+    """
+    handles resources that are lists of t2d items
+    """
+    def GET(self):
+        search = web.input()
+        # Search criteria must contain the key category
+        if 'category' not in search:
+            web.badrequest()
+            return
+        # OK, have a category - is it a valid category?
+        if search['category'] not in Item.CATEGORIES:
+            web.notfound()
+            return
+        # OK, have a valid category, did we get either lat/lon or address?
+        if 'address' not in search:
+            if 'lat' not in search and 'lon' not in search:
+                web.badrequest()
+                return
+            else:
+                # no address, but we do have the lat/lon
+                try:
+                    rtn = getByKeys(None, {'lat':search['lat'], 'lon':search['lon']})
+                except:
+                    web.internalerror()
+                    return
+                web.header('Content-Type', 'text/plain')
+                return json.JSONEncoder().encode(rtn)
+        else:
+            # did get address, look for that
+            try:
+                rtn = getByKeys(None, {'category':search['category'], 'address':search['address']})
+            except:
+                web.internalerror()
+                return
+            web.header('Content-Type', 'text/plain')
+            return json.JSONEncoder().encode(rtn)         
 
-if __name__ == "__main__": app.run()
+    def PUT(self):
+        web.nomethod()
+    def POST(self):
+        web.nomethod()
+    def DELETE(self):
+        web.nomethod()
+
+if __name__ == "__main__": t2dApp.run()

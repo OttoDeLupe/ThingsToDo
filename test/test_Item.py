@@ -7,6 +7,7 @@ import unittest
 import Item
 import sys
 import Utils
+import uuid
 #import DataAccessLayer
 
 class ItemTest(unittest.TestCase):
@@ -142,8 +143,8 @@ class ItemTest(unittest.TestCase):
             item.setAttrs(name,category,createdBy,**otherArgs)
         except AssertionError:
             self.fail("Assertion Error creating Item")
-        except:
-            self.fail("problem creating item - %s" % sys.exc_info()[0]) 
+        except Exception as e:
+            self.fail("problem creating item - %s" % e) 
         
         self.assertEqual(item.getPhone(), tele)
         self.assertEqual(item.getAddress(), addr)
@@ -218,7 +219,7 @@ class ItemTest(unittest.TestCase):
         whereclause = searchFor.makeWhereClause()
         self.assertEqual(expected, whereclause)
         
-        
+
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     #suite = unittest.TestLoader().loadTestsFromTestCase(ItemTest)

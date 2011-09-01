@@ -3,6 +3,8 @@ Created on Jun 28, 2011
 
 @author: papabear
 '''
+import uuid
+import binascii
 
 CATEGORIES = ["Recreational", "Cultural", "Historical"]
 
@@ -10,7 +12,13 @@ def genPK(name, category):
     '''
     Make a primary key from the name and category
     '''
-    return "||" + name + "||" + category + "||"
+    # pad out name to min of 15 characters so we get a key long enough
+    # to create the UUID
+    while len(name) < 15:
+        name = name + name
+        
+    key = binascii.hexlify("%d%s" % (CATEGORIES.index(category), name[0:15]))
+    return str(uuid.UUID(key))
     
 class ThingToDo(): 
     '''

@@ -4,12 +4,23 @@ Created on Jul 21, 2011
 @author: papabear
 '''
 import unittest
-import BizLayer
 import json
 from mock import Mock
 import Utils
+from BizLayer import t2dApp
+import os
 
-class Test(unittest.TestCase):
+# This will be imported by the biz Layer when testing.
+# Will be set to a new Mock for every test by setUp()
+# Set return values on a per-test basis.
+dbConn = None 
+
+# Set Test Mode, env checked on bizlayer side to determine
+# whether to use the mock dbConn or a real one
+os.environ['T2DTestMode'] ='true'
+
+
+class BizLayerTest(unittest.TestCase):
 
     def ConvertTestDataToJson(self, testDataList):
         jsonData = []
@@ -18,80 +29,177 @@ class Test(unittest.TestCase):
         return jsonData 
             
     def setUp(self):
-        self._bl = BizLayer.BizLayer()
+        global dbConn  # needs to be global so can be imported by BizLayer when under test
+        dbConn = Mock()
         self.testData = Utils.Utils();
         self.testJsonRtn = self.ConvertTestDataToJson(self.testData._testData)
         
     def tearDown(self):
         pass
 
-
-###
-# Interface testing means seeing (1) if I get the right stuff out and
-# second, do I get the right status codes when the wrong stuff goes in
-###
-    def testGetSingleItem(self):
+  
+    def testGetItemByKey(self):
         '''
-        create a JSON that represents a search criteria, send it to the GET method,
-        check to see that I get a valid json back. Send a bogus json. Do I get 
-        pass
-        
-        create the dbconn mock, with expected return values, pass as optional
-        arg to the biz layer get call. biz layer get uses the mock instead of 
-        creating a real dbconn to read from
+        Provide a known good key. Do I get the right item values back?
         '''
         name = self.testData._testData[0]['name']
         pk = self.testData._testData[0]['pk']
         category = self.testData._testData[0]['category']
         createdBy = self.testData._testData[0]['createdBy']
         address = self.testData._testData[0]['address']
-        phone = self.testData._testData[0]['phone']
+        phone = self.testData._testData[0]['phone']    
+
+        dbConn.read.return_value = self.testJsonRtn[0]
+        url = '/t2d/%s' % pk
+        response = t2dApp.request(url)
         
-        jsonInput = '{\"pk\": \"%s\", \"name\": \"%s\", \"category\":\"%s\" , \"createdBy\":\"%s\" , \"address\":\"%s\"}' \
-                % (pk, name, category , createdBy, address)
-        dbConnMock = Mock()
-        dbConnMock.read.return_value = [self.testJsonRtn[0]]
-                
-        rtnJson = self._bl.GET(jsonInput, dbConnMock)
+        rtnJson = response.data
+        self.assertEquals(response.headers['Content-Type'], 'text/plain')
+        self.assertEquals(response.status, '200 OK')      
+          
         rtn = json.JSONDecoder().decode(rtnJson)
-        self.assertEqual(rtn[0]['pk'],        pk, "PK mismatch")
-        self.assertEqual(rtn[0]['name'],      name, "name mismatch")
-        self.assertEqual(rtn[0]['category'],  category, "category mismatch")
-        self.assertEqual(rtn[0]['createdBy'], createdBy, "createdBy mismatch")
-        self.assertEqual(rtn[0]['phone'],     phone, "phone mismatch")
-        self.assertEqual(rtn[0]['address'],   address, "address mismatch")
-        
-    def testGetMultipleItems(self):
+        self.assertEqual(rtn['pk'],        pk, "PK mismatch")
+        self.assertEqual(rtn['name'],      name, "name mismatch")
+        self.assertEqual(rtn['category'],  category, "category mismatch")
+        self.assertEqual(rtn['createdBy'], createdBy, "createdBy mismatch")
+        self.assertEqual(rtn['phone'],     phone, "phone mismatch")
+        self.assertEqual(rtn['address'],   address, "address mismatch")
+
+    def testGetItemWithNonExistantResource(self):
         '''
-        json search criteria that will return multiple matches. Iterate over them to
-        make sure valid json array comes back
+        Provide a valid key where the resource doesn't exist. 
+        Do I get the right status code?
+        '''     
+        dbConn.read.return_value = None
+        url = '/t2d/foobar'
+        response = t2dApp.request(url)
+        self.assertEquals(response.status, '404 Not Found')      
+   
+    def testGetItemWithInvalidlyFormatedKey(self):
         '''
-        jsonInput = '{\"category\":\"%s\", \"lat\":%f, \"lon\":%f}' % ("Recreational", 42.7079, -71.1278)
-        dbConnMock = Mock()
-        dbConnMock.read.return_value = [self.testJsonRtn[0], self.testJsonRtn[1]]
-        
-        rtnJson = self._bl.GET(jsonInput, dbConnMock)
-        rtn = json.JSONDecoder().decode(rtnJson)
-        for i in rtn:
-            self.assertEqual(i['category'], "Recreational", "Categories don't match")
+        try to get an item with a bogus key (one that is not of the right format)
+        Do we get the proper status code back?
+        '''
+        url = '/t2d/#^%$@*&^!'
+        response = t2dApp.request(url)
+        self.assertEquals(response.status, '400 Bad Request')   
     
-                                        
-    def testGetReviews(self):
+    def testGetItemWithMultipleReviews(self):
         '''
-        json search criteria that returns single item, but that item has mulitple reviews
+        get an item that has multiple reviews
         Does the returned json have the right set of reviews?
         '''
-        category = self.testData._testData[0]['category']
-        name = self.testData._testData[0]['name']
-        jsonInput = '{\"category\":\"%s\",\"name\":\"%s\"}' % (category, name)
-        dbConnMock = Mock()
-        dbConnMock.read.return_value = [self.testJsonRtn[0]]
+        pk = self.testData._testData[0]['pk']
+        dbConn.read.return_value = self.testJsonRtn[0]
+        url = '/t2d/%s' % pk
+        response = t2dApp.request(url)
         
-        rtnJson = self._bl.GET(jsonInput, dbConnMock)
+        rtnJson = response.data
+        self.assertEquals(response.headers['Content-Type'], 'text/plain')
+        self.assertEquals(response.status, '200 OK')      
+          
         rtn = json.JSONDecoder().decode(rtnJson)
-        self.assertEqual(rtn[0]['review'][0], self.testData._testData[0]['review'][0], "mismatched review %s vs %s" % (rtn[0]['review'][0], self.testData._testData[0]['review'][0]))
-        self.assertEqual(rtn[0]['review'][1], self.testData._testData[0]['review'][1], "mismatched review %s vs %s" % (rtn[0]['review'][1], self.testData._testData[0]['review'][1]))
+        self.assertEqual(rtn['review'][0], self.testData._testData[0]['review'][0], "mismatched review %s vs %s" % (rtn['review'][0], self.testData._testData[0]['review'][0]))
+        self.assertEqual(rtn['review'][1], self.testData._testData[0]['review'][1], "mismatched review %s vs %s" % (rtn['review'][1], self.testData._testData[0]['review'][1]))
+       
         
+      
+    def testGetMultipleItems(self):
+        '''
+        search criteria that will return multiple matches. Iterate over them to
+        make sure what comes back is a list of items of the right category
+        '''
+        searchCriteria = '?category=Recreational&lat=42.7979&lon=-71.1278'
+        url = '/t2dList%s' % searchCriteria
+        dbConn.read.return_value = [self.testJsonRtn[0], self.testJsonRtn[1]]
+        response = t2dApp.request(url)
+        self.assertEquals(response.status, '200 OK')
+        rtn = json.JSONDecoder().decode(response.data)
+        for i in rtn:
+            self.assertEqual(i['category'], "Recreational", "Categories don't match")
+            
+    def testGetZeroItems(self):
+        '''
+        search criteria that matches no items. Should get back an empty list
+        with a OK status
+        '''
+        addr = self.testData._testData[2]['address']
+        # The URL has a category and address. But the item at the address isn't
+        # in the category. Hence, should return zero items
+        url = '/t2dList?category=Recreational&address=%s' % addr
+        dbConn.read.return_value = []
+        response = t2dApp.request(url)
+        self.assertEquals(response.status, '200 OK')
+        rtn = json.JSONDecoder().decode(response.data)
+        self.assertEqual(len(rtn), 0, "Incorrect number of items returned")
+        
+    def testGetOneItem(self):
+        '''
+        search criteria that matches a single item. Should get back a 
+        list with one element that matches the item in question
+        '''
+        addr = self.testData._testData[2]['address']
+        cat = self.testData._testData[2]['category']
+        url = '/t2dList?category=%s&address=%s' % (cat, addr)
+        dbConn.read.return_value = [self.testJsonRtn[2]]
+        response = t2dApp.request(url)
+        self.assertEquals(response.status, '200 OK')
+        rtn = json.JSONDecoder().decode(response.data)
+        self.assertEqual(len(rtn), 1, "Incorrect number of items returned")
+        self.assertEqual(rtn[0]['address'], addr, "Addresses do not match")
+        self.assertEqual(rtn[0]['category'], cat, "Categories do not match")
+        
+    def testGetMultipleItemsBogusCategory(self):
+        '''
+        Must pass in a valid category to search
+        '''
+        url = '/t2dList?category=foobar'
+        response = t2dApp.request(url)
+        self.assertEquals(response.status, '404 Not Found')
+        
+    def testGetMultipleItemsNoCategory(self):
+        '''
+        Gotta pass a category plus either lat/lon or address.
+        If min params not satisfied, it's an error
+        '''
+        url = '/t2dList?lat=42.7979&lon=-71.1278'
+        response = t2dApp.request(url)
+        self.assertEquals(response.status, '400 Bad Request')
+        
+    def testGetMultipleItemsNoAddrLatLon(self):
+        '''
+        Gotta pass a category plus either lat/lon or address.
+        If min params not satisfied, it's an error
+        '''
+        url = '/t2dList?category=Recreational'
+        response = t2dApp.request(url)
+        self.assertEquals(response.status, '400 Bad Request')
+        
+        
+    def testPutMultipleItems(self):
+        '''
+        invalid to try to put more than 1 item
+        '''
+        response = t2dApp.request('/t2dList', 'PUT', "anythinggoeshere")
+        self.assertEquals(response.status, '405 Method Not Allowed')
+           
+    def testPostMultipleItems(self):
+        '''
+        invalid to try to post more than 1 item
+        '''
+        response = t2dApp.request('/t2dList', 'POST', "anythinggoeshere")
+        self.assertEquals(response.status, '405 Method Not Allowed')
+    
+    def testDeleteMultipleItems(self):
+        '''
+        invalid to try to delete more than 1 item
+        '''
+        response = t2dApp.request('/t2dList', 'DELETE', "anythinggoeshere")
+        self.assertEquals(response.status, '405 Method Not Allowed')
+        
+"""   
+                                   
+
     def testPut(self):
         '''
         PUT == Create
@@ -147,7 +255,7 @@ class Test(unittest.TestCase):
         
 
 
-"""   
+
     def testPutMultiple(self):
         '''
         Only allowed to PUT single items
@@ -198,6 +306,8 @@ class Test(unittest.TestCase):
         '''
         self.fail("not yet implemented")
 """
+
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
+    t2dApp.run()
     unittest.main()

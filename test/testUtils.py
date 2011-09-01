@@ -6,6 +6,8 @@ Created on Aug 23, 2011
 import unittest
 import Utils
 import Item
+import binascii
+import uuid
 
 
 class UtilsTest(unittest.TestCase):
@@ -20,29 +22,23 @@ class UtilsTest(unittest.TestCase):
 
     def testRightNumberOfTestItems(self):
         self.assertEqual(9, len(self.testData._testData), "incorrect number of items in test data")
-
-    def testPKValid(self):
-        self.assertNotEqual(self.testData, None)
-        for d in self.testData._testData:
-            self.assertEqual(Item.genPK(d['name'], d['category']), d['pk'], "invalid PK")
-    
+        
+    def testValidPK(self):
+        name = "WhatAGreatPlaceToRockAndRoll"
+        category = "Recreational"
+        myuuid = str(uuid.UUID(binascii.hexlify("%d%s" % (0, name[0:15]))))
+        self.assertEqual(Item.genPK(name, category), myuuid)
+        
     def testReviewIsKey(self):
         '''even if review was not supplied, the key has to exist'''
         for d in self.testData._testData:
             self.assertTrue('review' in d, "review key not present")
-            
+    
     def testReviewIsList(self):
         '''the value for the review has to be a list'''
         for d in self.testData._testData:
             self.assertTrue((len(d['review']) >= 0), "review value not list")
-                            
-    def testPKUnique(self):
-        keys = []
-        for d in self.testData._testData:
-            keys.append(d['pk'])
-        pk = '||Far Corner Golf Course||Recreational||'
-        self.assertEqual(keys.count(pk), 1, "pk not unique")
-            
+                                 
     def testLatLonNumbers(self):
         '''lat and lon should be floats, not strings'''
         for d in self.testData._testData:
