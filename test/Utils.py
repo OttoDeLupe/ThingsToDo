@@ -22,7 +22,7 @@ class Utils():
 
     def __init__(self):
         '''
-        Constructor
+        set up the test data from an external csv file
         '''
         self._testData = []
 

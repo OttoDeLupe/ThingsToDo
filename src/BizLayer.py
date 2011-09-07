@@ -28,16 +28,17 @@ Created on Jul 18, 2011
      t2dList POST/PUT/DELETE: status codes 405
      -> Only allowed to create/update/delete individual t2d, not collections 
 '''
-import DataAccessLayer
-import Item
+
+import web
+import os
 import re
 import uuid
-import web
 import json
-import os
+
+import DataAccessLayer
+import Item
 
 urls = ('/t2d/(.*)', 't2d', '/t2dList', 't2dList')
-
 t2dApp = web.application(urls, globals())
 
 VALID_KEY = re.compile('[a-zA-Z0-9_-]{1,255}')
@@ -61,9 +62,9 @@ def getByKeys(pk=None, attrs=None):
     the data store & return what is found based on the 
     key (PK) or attributes passed
     '''
-    # using dbconn, read using the where clause
     if isTestMode(): # check env. if in test mode, import dbconn mock
-        from test_BizLayer import dbConn
+        import Shared
+        dbConn = Shared.dbMock
     else:
         dbConn = DataAccessLayer.DataAccessLayer()
 
@@ -76,15 +77,14 @@ def getByKeys(pk=None, attrs=None):
     else:
         raise KeyError
     where = searchFor.makeWhereClause()
-        
+
     try:
         rtn = dbConn.read(where)
     except Exception as e:
+        print e
         raise e
     return rtn
 
-
-  
 
 class t2d():
     ''' REST interface implementing WebService methods for a Thing To Do (t2d)'''
@@ -105,9 +105,11 @@ class t2d():
 
         if rtn is None:
             web.notfound()
+            return 
             
         web.header('Content-Type', 'text/plain')
         return json.JSONEncoder().encode(rtn)
+        return rtn
               
 """
     def POST(self, jsonitem=None, dbconn=None):
