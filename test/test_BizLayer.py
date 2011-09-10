@@ -47,7 +47,7 @@ class BizLayerTest(unittest.TestCase):
 
         Shared.dbMock.read.return_value = self.testJsonRtn[0]
         url = '/t2d/%s' % pk
-        response = t2dApp.request(url)
+        response = t2dApp.request(url) 
         
         rtnJson = response.data
         self.assertEquals(response.status, '200 OK')      
@@ -186,7 +186,7 @@ class BizLayerTest(unittest.TestCase):
         testPutMultipleItems
         invalid to try to put more than 1 item
         '''
-        response = t2dApp.request('/t2dList', 'PUT', "anythinggoeshere")
+        response = t2dApp.request('/t2dList', method='PUT', data="anythinggoeshere")
         self.assertEquals(response.status, '405 Method Not Allowed')
            
     def testPostMultipleItems(self):
@@ -194,7 +194,7 @@ class BizLayerTest(unittest.TestCase):
         testPostMultipleItems
         invalid to try to post more than 1 item
         '''
-        response = t2dApp.request('/t2dList', 'POST', "anythinggoeshere")
+        response = t2dApp.request('/t2dList', method='POST', data="anythinggoeshere")
         self.assertEquals(response.status, '405 Method Not Allowed')
     
     def testDeleteMultipleItems(self):
@@ -202,73 +202,160 @@ class BizLayerTest(unittest.TestCase):
         testDeleteMultipleItems
         invalid to try to delete more than 1 item
         '''
-        response = t2dApp.request('/t2dList', 'DELETE', "anythinggoeshere")
+        response = t2dApp.request('/t2dList', method='DELETE', data="anythinggoeshere")
         self.assertEquals(response.status, '405 Method Not Allowed')
 
-    ## def testPut(self):
-    ##     '''
-    ##     PUT == Create
-    ##     Send a json that represents a new item
-    ##     If so, do a get and make sure that the returned json matches the json sent in
-    ##     '''
-    ##     # Used http://www.getaddress.net/ to do the geocoding of the below lat/lon
-    ##     # expectation is that geocoding is done on client side, and address plus lat/lon are
-    ##     # sent to server side when item is created.
-    ##     name = self.testData._testData[2]['name']
-    ##     category = self.testData._testData[2]['category']
-    ##     createdBy = self.testData._testData[2]['createdBy']
-    ##     address = self.testData._testData[2]['address']
-    ##     lat = float(self.testData._testData[2]['lat'])
-    ##     lon = float(self.testData._testData[2]['lon'])
-        
-    ##     jsonInput = '{\"name\":\"%s\", \"category\":\"%s\", \"createdBy\":\"%s\", \"address\":\"%s\", \"lat\":%f, \"lon\":%f}' \
-    ##             % (name, category, createdBy, address, lat, lon)     
-    ##     Shared.dbConnMock = Mock()
-    ##     Shared.dbConnMock.write.return_value = None
-    ##     Shared.dbConnMock.read.return_value = None
-        
-    ##     # given that simpleDB is 'eventual consistency', doing the put and immediate get probably wouldn't work
-    ##     # for real. Given this is using mocks, probably OK.
-    ##     rtnJson = self._bl.PUT(jsonInput, Shared.dbConnMock)
-    ##     rtn = json.JSONDecoder().decode(rtnJson)
-    ##     # PK doesn't come back as part of the json. So compare name & category
-    ##     # Unlike get, which can return 1 or more items, put only returns 1
-    ##     self.assertEqual(rtn['name'], name,"mismatched name: %s != %s" % (rtn['name'], name))
-    ##     self.assertEqual(rtn['category'], category,"mismatched category: %s != %s" % (rtn['category'], category))
-    ##     self.assertEqual(rtn['address'], address, "mismatched address: %s != %s" % (rtn['address'], address))
-        
-        
+    def testPutNewItem(self):
+        '''
+        testPutNewItem
+        PUT == Create
+        Try to add a new item to the app.
+        Expectation is that geocoding is done on client side so that
+        both lat/lon and address are provided in the submission
+        '''
+        name = 'Morse Parker House'
+        category = 'Historical'
+        createdBy = 'Mr Morse'
+        address = '104 Washington Street, Boxford, MA 01921'
+        lat = 42.713 # 42-42.775
+        lon = -71.053 # -71-03.208
+        jsonInput = '{\"name\":\"%s\", \"category\":\"%s\", \"createdBy\":\"%s\", \"address\":\"%s\", \"lat\":%f, \"lon\":%f}' \
+                    % (name, category, createdBy, address, lat, lon)
+        Shared.dbMock.write.return_value = None
+        Shared.dbMock.read.return_value = None
+        url = '/t2d/'
+        response = t2dApp.request(url, method='PUT', data=jsonInput)
+        self.assertEquals(response.status, '200 OK')      
 
-    ## def testPutExists(self):
-    ##     '''
-    ##     PUT == Create
-    ##     Trying to create an item that already exists is an error
-    ##     '''
-    ##     pk = self.testData._testData[0]['pk']
-    ##     name = self.testData._testData[0]['name']
-    ##     category = self.testData._testData[0]['category']
-    ##     createdBy = self.testData._testData[0]['createdBy']
-    ##     address = self.testData._testData[0]['address']
-    ##     jsonInput = '{\"pk\": \"%s\", \"name\": \"%s\", \"category\":\"%s\" , \"createdBy\":\"%s\" , \"address\":\"%s\"}' \
-    ##             % (pk, name, category, createdBy, address)
-    ##     Shared.dbConnMock = Mock()
-    ##     Shared.dbConnMock.read.return_value = [self.testJsonRtn[0]]
-    ##     Shared.dbConnMock.write.return_value = None
+    def testPutItemMissingRequiredAttributes(self):
+        '''
+        testPutItemMissingRequiredAttributes
+        Make sure that if we dont supply name, category and createdBy,
+        that we get the right error code
+        '''
+        address = '104 Washington Street, Boxford, MA 01921'
+        lat = 42.713 # 42-42.775
+        lon = -71.053 # -71-03.208
+        jsonInput = '{\"address\":\"%s\", \"lat\":%f, \"lon\":%f}' % (address, lat, lon)
+        Shared.dbMock.write.return_value = None
+        Shared.dbMock.read.return_value = None
+        url = '/t2d/'
+        response = t2dApp.request(url, method='PUT', data=jsonInput)
+        self.assertEquals(response.status, '400 Bad Request')
+
+    def testPutItemMissingLocation(self):
+        '''
+        testPutItemMissingLocation
+        One of address or lat/lon is required in addition to name, category, createdBy
+        '''
+        name = 'Morse Parker House'
+        category = 'Historical'
+        createdBy = 'Mr Morse'
+        jsonInput = '{\"name\":\"%s\", \"category\":\"%s\", \"createdBy\":\"%s\"}' \
+                    % (name, category, createdBy)
+        Shared.dbMock.write.return_value = None
+        Shared.dbMock.read.return_value = None
+        url = '/t2d/'
+        response = t2dApp.request(url, method='PUT', data=jsonInput)
+        self.assertEquals(response.status, '400 Bad Request')      
+
+    def testPutItemWithJustLatLon(self):
+        '''
+        testPutItemWithJustLatLon
+        Should be able to create an item with only Lat/Lon in addition to
+        required name, category and createdBy
+        '''
+        name = 'Morse Parker House'
+        category = 'Historical'
+        createdBy = 'Mr Morse'
+        lat = 42.713 # 42-42.775
+        lon = -71.053 # -71-03.208
+        jsonInput = '{\"name\":\"%s\", \"category\":\"%s\", \"createdBy\":\"%s\", \"lat\":%f, \"lon\":%f}' \
+                    % (name, category, createdBy, lat, lon)
+        Shared.dbMock.write.return_value = None
+        Shared.dbMock.read.return_value = None
+        url = '/t2d/'
+        response = t2dApp.request(url, method='PUT', data=jsonInput)
+        self.assertEquals(response.status, '200 OK')
+
+    def testPutItemWithJustAddress(self):
+        '''
+        testPutItemWithJustAddress
+        Should be able to create an item with only Address in addition to
+        required name, category and createdBy
+        '''
+        name = 'Morse Parker House'
+        category = 'Historical'
+        createdBy = 'Mr Morse'
+        address = '104 Washington Street, Boxford, MA 01921'
+        jsonInput = '{\"name\":\"%s\", \"category\":\"%s\", \"createdBy\":\"%s\", \"address\":\"%s\"}' \
+                    % (name, category, createdBy, address)
+        Shared.dbMock.write.return_value = None
+        Shared.dbMock.read.return_value = None
+        url = '/t2d/'
+        response = t2dApp.request(url, method='PUT', data=jsonInput)
+        self.assertEquals(response.status, '200 OK')
+
+    def testPutItemWithNoAddressAndMissingLon(self):
+        '''
+        testPutItemWithNoAddressAndMissingLon
+        If no address, and specifying a lat/lon, need to have both the lat and lon
+        '''
+        name = 'Morse Parker House'
+        category = 'Historical'
+        createdBy = 'Mr Morse'
+        lat = 42.713 # 42-42.775
+        jsonInput = '{\"name\":\"%s\", \"category\":\"%s\", \"createdBy\":\"%s\", \"lat\":%f}' \
+                    % (name, category, createdBy, lat)
+        Shared.dbMock.write.return_value = None
+        Shared.dbMock.read.return_value = None
+        url = '/t2d/'
+        response = t2dApp.request(url, method='PUT', data=jsonInput)
+        self.assertEquals(response.status, '400 Bad Request')      
+
+    def testPutItemInvalidCategory(self):
+        '''
+        testPutItemInvalidCategory
+        Even if all required args are there, a valid category must be sent
+        '''
+        name = 'Morse Parker House'
+        category = 'Nonsensical'
+        createdBy = 'Mr Morse'
+        address = '104 Washington Street, Boxford, MA 01921'
+        jsonInput = '{\"name\":\"%s\", \"category\":\"%s\", \"createdBy\":\"%s\", \"address\":\"%s\"}' \
+                    % (name, category, createdBy, address)
+        Shared.dbMock.write.return_value = None
+        Shared.dbMock.read.return_value = None
+        url = '/t2d/'
+        response = t2dApp.request(url, method='PUT', data=jsonInput)
+        self.assertEquals(response.status, '400 Bad Request')      
         
-    ##     self.assertRaises(AttributeError, self._bl.PUT, jsonInput, Shared.dbConnMock)
         
+    def testPutAlreadyExistingItem(self):
+        '''
+        testPutAlreadyExistingItem
+        Cant create an item that already exists. Can only update (ie POST) it
+        '''
+        name = self.testData._testData[0]['name']
+        category = self.testData._testData[0]['category']
+        createdBy = self.testData._testData[0]['createdBy']
+        address = self.testData._testData[0]['address']
+        jsonInput = '{\"name\":\"%s\", \"category\":\"%s\", \"createdBy\":\"%s\", \"address\":\"%s\"}' \
+                    % (name, category, createdBy, address)
+        Shared.dbMock.read.return_value = None
+        Shared.dbMock.write.return_value = None
+        url = '/t2d/'
+        response = t2dApp.request(url, method='PUT', data=jsonInput)
+        self.assertEquals(response.status, '200 OK')
+        # Now that its there, try putting it in again. This should fail
+        Shared.dbMock.read.return_value = self.testJsonRtn[0]
+        response = t2dApp.request(url, method='PUT', data=jsonInput)
+        self.assertEquals(response.status, '409 Conflict')
+
+
+     
+
         
-
-
-
-    ## def testPutMultiple(self):
-    ##     '''
-    ##     Only allowed to PUT single items
-    ##     Do we get the right error code back if we try multiples?
-    ##     '''
-    ##     self.fail("not yet implemented")
-
-   
     ## def testPost(self):
     ##     '''
     ##     Post == Update
@@ -278,30 +365,46 @@ class BizLayerTest(unittest.TestCase):
     ##     '''
     ##     self.fail("not yet implemented")
     
-        
-    ## def testPostMultiple(self):
-    ##     '''
-    ##     Only allowed to POST single items
-    ##     Do we get the right error code back if we try multples?
-    ##     '''
-    ##     self.fail("not yet implemented")
-    
-    
-    ## def testDelete(self):
-    ##     '''
-    ##     Send a json that represents an existing item
-    ##     Do we get back a 200?
-    ##     If so, do a get and make sure that we get nullset back
-    ##     '''
-    ##     self.fail("not yet implemented")
+    def testDelete(self):
+        '''
+        testDelete
+        Try to delete an existing resource. Do we get back a 200?
+        If so, try to do a get - do we get a 404?
+        '''
+        pk = self.testData._testData[0]['pk']
+        Shared.dbMock.read.return_value = None
+        Shared.dbMock.delete.return_value = None
+        url = '/t2d/%s' % pk
+        response = t2dApp.request(url, method='DELETE')
+        self.assertEquals(response.status, '200 OK')      
+        response = t2dApp.request(url)  # GET
+        self.assertEquals(response.status, '404 Not Found')
 
-    
-    ## def testDeleteDoesntExists(self):
-    ##     '''
-    ##     Send a json that represents an item that doesnt exist
-    ##     Do we get back the right error code?
-    ##     '''
-    ##     self.fail("not yet implemented")
+    def testDeleteWithInvalidlyFormatedKey(self):
+        '''
+        testDeleteWithInvalidlyFormatedKey
+        try to delete an item with a bogus key (one that is not of the right format)
+        Do we get the proper status code back?
+        '''
+        url = '/t2d/#^%$@*&^!'
+        response = t2dApp.request(url, method='DELETE')
+        self.assertEquals(response.status, '400 Bad Request')   
+
+    def testDeleteWithMissingResource(self):
+        '''
+        testDeleteWithMissingResource
+        Try to delete an item that doesnt exist
+        Do we get a 404 back?
+        '''
+        pk = self.testData._testData[0]['pk']
+        Shared.dbMock.delete.return_value = None
+        url = '/t2d/%s' % pk
+        response = t2dApp.request(url, method='DELETE')
+        self.assertEquals(response.status, '200 OK')      
+        # Now try to delete it again. Should get a 404
+        Shared.dbMock.delete.side_effect = AttributeError('Key Not Found')
+        response = t2dApp.request(url, method='DELETE')
+        self.assertEquals(response.status, '404 Not Found')
 
     
 if __name__ == "__main__":

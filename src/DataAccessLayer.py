@@ -89,6 +89,8 @@ class DataAccessLayer():
         
         if foundrow:
             foundrow.delete()
+        else:
+            raise AttributeError('Key Not Found')
             
         
     

@@ -75,6 +75,7 @@ class DALTestCase(unittest.TestCase):
 ###
     def test_readSingleItem(self):
         '''
+        test_readSingleItem
         read from the persistence store using the given criteria that should select a single item
         if more than one item returned, fail
         if returned item does not match the supplied criteria, fail
@@ -103,6 +104,7 @@ class DALTestCase(unittest.TestCase):
 ###
     def test_readMultipleItemsFromCategory(self):
         '''
+        test_readMultipleItemsFromCategory
         read from the persistence store using given criteria
         may return zero or more items
         each returned item must match the supplied criteria, otherwise, fail
@@ -121,6 +123,9 @@ class DALTestCase(unittest.TestCase):
         
         
     def test_readMultipleItemsFromLatLon(self):
+        '''
+        test_readMultipleItemsFromLatLon
+        '''
         ll = Item.LatLon(42.69095, -71.1277)
         searchFor = Item.SearchFor()
         searchFor.setAttr('latlon', ll)
@@ -137,6 +142,7 @@ class DALTestCase(unittest.TestCase):
         
     def test_readItemsBogusCriteria(self):
         '''
+        test_readItemsBogusCriteria
         read from the store using bogus criteria (should match zero items)
         confirm proper exception generated
             '''
@@ -150,7 +156,15 @@ class DALTestCase(unittest.TestCase):
             print 'unable to read from persistence store -', ex
         
         self.assertFalse(rtn)
-                                
+
+    def test_deleteNonExistantItem(self):
+        '''
+        test_deleteNonExistantItem
+        Try to delete an item that doesnt exist.
+        Make sure we get the right exception raised
+        '''
+        self.assertRaises(AttributeError, self._testDAL.delete, '33616161-6262-6263-6363-646464656565')
+
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

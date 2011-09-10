@@ -63,7 +63,7 @@ def getByKeys(pk=None, attrs=None):
     key (PK) or attributes passed
     '''
     if isTestMode(): # check env. if in test mode, import dbconn mock
-        import Shared
+        import Shared 
         dbConn = Shared.dbMock
     else:
         dbConn = DataAccessLayer.DataAccessLayer()
@@ -110,39 +110,58 @@ class t2d():
         web.header('Content-Type', 'text/plain')
         return json.JSONEncoder().encode(rtn)
         return rtn
-              
-"""
-    def POST(self, jsonitem=None, dbconn=None):
-        '''
-        dejsonize the supplied item, get a dbconnection, find the corresponding record (POST = Update)
-        and do the necessary updates.
-        '''
-        # the input here can't come on the URL; has to come via the post packaging mechanism
-        if not jsonitem: jsonitem = web.input()
-        if not dbconn: self._DAL = DataAccessLayer.DataAccessLayer()
-        
-        assert True==False, "not yet implemented"
 
-    def PUT(self, jsonitem=None, dbconn=None):
+    def DELETE(self, resource):
+        '''
+        Try to delete the supplied resource
+        '''
+        if isTestMode(): # check env. if in test mode, import dbconn mock
+            import Shared
+            dbConn = Shared.dbMock
+        else:
+            dbConn = DataAccessLayer.DataAccessLayer()
+
+        if not isValidKey(resource):
+            web.badrequest()
+            return
+
+        try:
+            dbConn.delete(resource)
+        except AttributeError:
+            web.notfound()
+            return
+        except:
+            web.badrequest()
+            return
+        web.ok()
+        return
+
+    def PUT(self, ignoreMe):
         '''
         PUT == Create
-        djsonize the supplied item, get a dbConnection, see if the item already exists. If it does, fail
-        if it doesnt, insert it.
         '''
-        # the input here can't come on the URL; has to come via the post packaging mechanism
-        if not jsonitem: jsonitem = web.input()
-        if not dbconn: self._DAL = DataAccessLayer.DataAccessLayer()
-        # make an item and populate the attributes from the passed data
+        jsonData = web.data()
         item = Item.ThingToDo()
-        itemData = json.JSONDecoder().decode(jsonitem)
+        itemData = json.JSONDecoder().decode(jsonData)
+        if isTestMode(): # check env. if in test mode, import dbconn mock
+            import Shared
+            dbConn = Shared.dbMock
+        else:
+            dbConn = DataAccessLayer.DataAccessLayer()
         
         if 'lat' in itemData and 'lon' in itemData:
             itemData['latlon'] = Item.LatLon(itemData['lat'], itemData['lon'])
             
         # name, category and createdBy are required
         if not ('name' in itemData and 'category' in itemData and 'createdBy' in itemData):
-            raise AttributeError('Required attributes not supplied')
-        
+            web.badrequest()
+            return
+
+        # One of address or lat/lon pair required
+        if 'address' not in itemData and not ('lat' in itemData and 'lon' in itemData):
+            web.badrequest()
+            return
+
         otherArgs = {}
         for attr, val in itemData.iteritems():
             if attr == 'name' or attr == 'category' or attr == 'createdBy':
@@ -150,7 +169,12 @@ class t2d():
                 continue
             if attr == 'lat' or attr == 'lon': continue
             otherArgs[attr] = val
-        item.setAttrs(itemData['name'], itemData['category'], itemData['createdBy'], **otherArgs)
+        
+        try: 
+            item.setAttrs(itemData['name'], itemData['category'], itemData['createdBy'], **otherArgs)
+        except:
+            web.badrequest()
+            return
         
         # If the item already exists, that's an error - caller should be using POST, not PUT
         # Make the PK and see if it exists. AttributeError if it does
@@ -160,34 +184,40 @@ class t2d():
         where = searchFor.makeWhereClause()
         
         try:
-            rtn = dbconn.read(where)
+            rtn = dbConn.read(where)
         except Exception as ex:
             print 'Unexpected error in checking for existing record -', ex
+            web.badrequest()
             return
         if rtn != None:
-            raise AttributeError
+            print 'item already exists'
+            web.conflict()
             return
         
         # now that we have an item that doesn't exist, write it to the dbconn
         try:
-            dbconn.write(item._serialized)
+            dbConn.write(item._serialized)
         except Exception as ex:
             print 'problem in PUT writing item - ', ex
-            raise 
+            web.badrequest()
+            return
         
         return json.JSONEncoder().encode(item._serialized)
             
+
+    
+    ## def POST(self, jsonitem=None, dbconn=None):
+    ##     '''
+    ##     dejsonize the supplied item, get a dbconnection, find the corresponding record (POST = Update)
+    ##     and do the necessary updates.
+    ##     '''
+    ##     # the input here can't come on the URL; has to come via the post packaging mechanism
+    ##     if not jsonitem: jsonitem = web.input()
+    ##     if not dbconn: self._DAL = DataAccessLayer.DataAccessLayer()
         
-        
-        
-    def DELETE(self, criteria):
-        '''
-        dejsonize the criteria, get a dbconn, search for the criteria. If the search matches more than
-        one record - error... can only delete a single record. If the search matches a single record,
-        delete it
-        '''
-        pass
-"""
+    ##     assert True==False, "not yet implemented"
+
+
 
 class t2dList():
     """

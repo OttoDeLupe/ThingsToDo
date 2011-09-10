@@ -29,6 +29,9 @@ class ItemTest(unittest.TestCase):
 # - Category
 ###
     def testInstantiateItemWithAddress(self):
+        '''
+        testInstantiateItemWithAddress
+        '''
         name = self.testData._testData[3]['name']
         createdBy = self.testData._testData[3]['createdBy']
         category = self.testData._testData[3]['category']
@@ -48,6 +51,9 @@ class ItemTest(unittest.TestCase):
         self.assertEquals(item.getAddress(), otherArgs['address'], "addresses don't match: %s != %s" % (item.getAddress(), otherArgs['address']))
         
     def testInstantiateItemWithLatLon(self):
+        '''
+        testInstantiateItemWithLatLon
+        '''
         ll = Item.LatLon(self.testData._testData[3]['lat'], self.testData._testData[3]['lon'])
         name = self.testData._testData[3]['name']
         createdBy = self.testData._testData[3]['createdBy']
@@ -68,6 +74,9 @@ class ItemTest(unittest.TestCase):
         self.assertEquals(item.getLatLon()._lon, ll._lon, "lons don't match: %s != %s" % (item.getLatLon()._lon, ll._lon))
         
     def testInstantiateItemMaxArgs(self):
+        '''
+        testInstantiateItemMaxArgs
+        '''
         ll = Item.LatLon(self.testData._testData[3]['lat'], self.testData._testData[3]['lon'])
         name = self.testData._testData[3]['name']
         createdBy = self.testData._testData[3]['createdBy']
@@ -97,6 +106,9 @@ class ItemTest(unittest.TestCase):
 # Requirement: Unable to create an item when minimum attributes NOT specified
 ###  
     def testInstantiateItemMissingArgs(self):
+        '''
+        testInstantiateItemMissingArgs
+        '''
         name = self.testData._testData[3]['name']
         createdBy = self.testData._testData[3]['createdBy']
         category = self.testData._testData[3]['category']
@@ -112,6 +124,9 @@ class ItemTest(unittest.TestCase):
 # Requirement: Only enumerated categories allowed
 ###
     def testInstantiateItemBogusCategory(self):
+        '''
+        testInstantiateItemBogusCategory
+        '''
         name = self.testData._testData[3]['name']
         createdBy = self.testData._testData[3]['createdBy']
         category = "Nonsense"
@@ -124,6 +139,9 @@ class ItemTest(unittest.TestCase):
 # Requirement: Be able to create an item with all args
 ###
     def testCreateAllArgs(self):
+        '''
+        testCreateAllArgs
+        '''
         ll = Item.LatLon(self.testData._testData[0]['lat'], self.testData._testData[0]['lon'])
         name = self.testData._testData[0]['name']
         createdBy = self.testData._testData[0]['createdBy']
@@ -164,6 +182,9 @@ class ItemTest(unittest.TestCase):
 # Requirement: Be able to encapsulate a lat/lon pair
 ###
     def testLatLon(self):
+        '''
+        testLatLon
+        '''
         lat = 42.687
         lon = -71.110
         ll = Item.LatLon(lat, lon)
@@ -171,6 +192,9 @@ class ItemTest(unittest.TestCase):
         self.assertEqual(ll._lon, lon)
         
     def testLatLonBoundingBox(self):
+        '''
+        testLatLonBoundingBox
+        '''
         lat = 42.687
         lon = -71.110
         offset = 10
@@ -189,6 +213,9 @@ class ItemTest(unittest.TestCase):
 #    the encapsulation & not lose criteria, or have bogus ones created
 ###
     def testSearchFor(self):
+        '''
+        testSearchFor
+        '''
         searchFor = Item.SearchFor()
         searchFor.setAttr('name', "Far Corner Golf Course")
         searchFor.setAttr('category', "Recreational")
@@ -206,6 +233,9 @@ class ItemTest(unittest.TestCase):
         self.assertEqual(wc, expected)
         
     def testMakeWhereClause(self):
+        '''
+        testMakeWhereClause
+        '''
         offset = 10
         ll = Item.LatLon(42.69095, -71.1277)
         ll.boundingBox(offset)
