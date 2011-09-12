@@ -56,6 +56,15 @@ class ThingToDo():
         # strings and using this as the "primary key"
         self._serialized['pk'] = genPK(self._serialized['name'], self._serialized['category'])
 
+    def setAttribute(self, attr, val):
+        if attr not in self._serialized:
+            raise KeyError 
+        else:
+            if attr in ('name', 'category','createdBy'):
+                raise AttributeError
+            else:
+                self._serialized[attr] = val
+        
     def getName(self):
         return self._serialized['name']
     def getCategory(self):

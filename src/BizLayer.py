@@ -205,17 +205,72 @@ class t2d():
         return json.JSONEncoder().encode(item._serialized)
             
 
-    
-    ## def POST(self, jsonitem=None, dbconn=None):
-    ##     '''
-    ##     dejsonize the supplied item, get a dbconnection, find the corresponding record (POST = Update)
-    ##     and do the necessary updates.
-    ##     '''
-    ##     # the input here can't come on the URL; has to come via the post packaging mechanism
-    ##     if not jsonitem: jsonitem = web.input()
-    ##     if not dbconn: self._DAL = DataAccessLayer.DataAccessLayer()
+    def POST(self, ignoreMe):
+        '''
+        Update the resource found in the PK passed in
+        '''
+        jsonData = web.data()
+
+        newData = json.JSONDecoder().decode(jsonData)
+        if isTestMode(): # check env. if in test mode, import dbconn mock
+            import Shared
+            dbConn = Shared.dbMock
+        else:
+            dbConn = DataAccessLayer.DataAccessLayer()
+
+        # Find the item based on the PK passed
+        # Update the record, adding new columns if they don't already exist
         
-    ##     assert True==False, "not yet implemented"
+        if not isValidKey(newData['pk']):
+            web.badrequest()
+            return
+        
+        try:
+            existingData = getByKeys(newData['pk'])
+        except:
+            web.badrequest()
+            return
+
+        if existingData is None:
+            web.notfound()
+            return
+
+        # Got the record - update it
+        # It's not a Item.ThingToDo, however. Must turn it into one
+        item = Item.ThingToDo()
+        otherArgs = {}
+        for attr, val in existingData.iteritems():
+            if attr in ('name', 'category', 'createdBy'):
+                # remove from the dict so that what remains is what setAttrs expects for keyword args
+                continue
+            otherArgs[attr] = val
+        item.setAttrs(existingData['name'],existingData['category'],existingData['createdBy'], **otherArgs)
+        # OK, breathed life into a ThingToDo, now, update based on the data passed
+        for attr, val in newData.iteritems():
+            if attr in ('name','category','createdBy'): continue
+            try:
+                item.setAttribute(attr, val)
+            except KeyError:
+                print 'Unknown attribute (%s)' % attr
+                web.badrequest()
+                return
+            except Exception as e:
+                print e
+                web.internalerror()
+                return
+        web.ok()
+        
+        # Finally update the record
+        try:
+            dbConn.write(item._serialized)
+        except Exception as ex:
+            print 'problem in POST writing item - ', ex
+            web.badrequest()
+            return
+        web.ok()
+        
+        
+    
 
 
 

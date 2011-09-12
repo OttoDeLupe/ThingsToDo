@@ -177,7 +177,97 @@ class ItemTest(unittest.TestCase):
         self.assertEqual(item.getLatLon()._lat, ll._lat)
         self.assertEqual(item.getLatLon()._lon, ll._lon)
         
-
+    def testUpdateExistingAttribute(self):
+        '''
+        testUpdatetExistingAttribute
+        Update an existing attribute with a new value
+        '''
+        ll = Item.LatLon(self.testData._testData[0]['lat'], self.testData._testData[0]['lon'])
+        name = self.testData._testData[0]['name']
+        createdBy = self.testData._testData[0]['createdBy']
+        category = self.testData._testData[0]['category']
+        tele = self.testData._testData[0]['phone']
+        addr = self.testData._testData[0]['address']
+        website = self.testData._testData[0]['url']
+        mail = self.testData._testData[0]['email']
+        rate = self.testData._testData[0]['rating']
+        revs = self.testData._testData[0]['review']
+        description = self.testData._testData[0]['url']
+        otherArgs = {'latlon':ll, 'phone':tele, 'address':addr, 'url':website, 'email':mail, 'rating':rate,
+                     'review':revs, 'descr':description}
+        try:
+            item = Item.ThingToDo()
+            self.assertTrue(item)
+            item.setAttrs(name,category,createdBy,**otherArgs)
+        except AssertionError:
+            self.fail("Assertion Error creating Item")
+        except Exception as e:
+            self.fail("problem creating item - %s" % e) 
+            
+        # Here's the real test
+        item.setAttribute('phone', '123-456-7890')
+        self.assertEqual(item.getPhone(), '123-456-7890')
+        
+    def testSetNonExistingAttribute(self):
+        '''
+        testSetNonExistingAttribute
+        Add a new attribute to an existing item, should fail
+        '''
+        ll = Item.LatLon(self.testData._testData[0]['lat'], self.testData._testData[0]['lon'])
+        name = self.testData._testData[0]['name']
+        createdBy = self.testData._testData[0]['createdBy']
+        category = self.testData._testData[0]['category']
+        tele = self.testData._testData[0]['phone']
+        addr = self.testData._testData[0]['address']
+        website = self.testData._testData[0]['url']
+        mail = self.testData._testData[0]['email']
+        rate = self.testData._testData[0]['rating']
+        revs = self.testData._testData[0]['review']
+        description = self.testData._testData[0]['url']
+        otherArgs = {'latlon':ll, 'phone':tele, 'address':addr, 'url':website, 'email':mail, 'rating':rate,
+                     'review':revs, 'descr':description}
+        try:
+            item = Item.ThingToDo()
+            self.assertTrue(item)
+            item.setAttrs(name,category,createdBy,**otherArgs)
+        except AssertionError:
+            self.fail("Assertion Error creating Item")
+        except Exception as e:
+            self.fail("problem creating item - %s" % e) 
+            
+        # Here's the real test
+        self.assertRaises(KeyError,item.setAttribute, 'random', 'random notes') 
+ 
+        
+    def testUpdateNonMutableAttribute(self):
+        '''
+        testUpdateNonMutableAttribute
+        Shouldn't be able to update name, category or createdBy
+        '''
+        ll = Item.LatLon(self.testData._testData[0]['lat'], self.testData._testData[0]['lon'])
+        name = self.testData._testData[0]['name']
+        createdBy = self.testData._testData[0]['createdBy']
+        category = self.testData._testData[0]['category']
+        tele = self.testData._testData[0]['phone']
+        addr = self.testData._testData[0]['address']
+        website = self.testData._testData[0]['url']
+        mail = self.testData._testData[0]['email']
+        rate = self.testData._testData[0]['rating']
+        revs = self.testData._testData[0]['review']
+        description = self.testData._testData[0]['url']
+        otherArgs = {'latlon':ll, 'phone':tele, 'address':addr, 'url':website, 'email':mail, 'rating':rate,
+                     'review':revs, 'descr':description}
+        try:
+            item = Item.ThingToDo()
+            self.assertTrue(item)
+            item.setAttrs(name,category,createdBy,**otherArgs)
+        except AssertionError:
+            self.fail("Assertion Error creating Item")
+        except Exception as e:
+            self.fail("problem creating item - %s" % e) 
+            
+        # Here's the real test
+        self.assertRaises(AttributeError,item.setAttribute, 'name', 'ANewName') 
 ###
 # Requirement: Be able to encapsulate a lat/lon pair
 ###

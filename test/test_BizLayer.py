@@ -351,19 +351,84 @@ class BizLayerTest(unittest.TestCase):
         Shared.dbMock.read.return_value = self.testJsonRtn[0]
         response = t2dApp.request(url, method='PUT', data=jsonInput)
         self.assertEquals(response.status, '409 Conflict')
-
-
-     
-
         
-    ## def testPost(self):
-    ##     '''
-    ##     Post == Update
-    ##     Send a json that has a PK entry and some updates (a new review and an updated phone number)
-    ##     Did the post return 200?
-    ##     If so, do a GET and see if the returned json has the updates reflected, and no other changes
-    ##     '''
-    ##     self.fail("not yet implemented")
+    def testPostUpdateExistingItem(self):
+        '''
+        testPostUpdateExistingItem
+        As post updates an already existing item, there dont have to be checks on
+        required args. Just update existing fields or add new ones
+        In this case, add a new review and make sure that we get all the reviews back
+        '''
+        # Put (Create) an item
+        name = self.testData._testData[7]['name']
+        pk = self.testData._testData[7]['pk']
+        category = self.testData._testData[7]['category']
+        createdBy = self.testData._testData[7]['createdBy']
+        address = self.testData._testData[7]['address']
+        jsonInput = '{\"name\":\"%s\", \"category\":\"%s\", \"createdBy\":\"%s\", \"address\":\"%s\"}' \
+                    % (name, category, createdBy, address)
+        Shared.dbMock.write.return_value = None
+        Shared.dbMock.read.return_value = None
+        url = '/t2d/'
+        response = t2dApp.request(url, method='PUT', data=jsonInput)
+        self.assertEqual(response.status, '200 OK', 'PUT failed')
+
+        # now update it
+        Shared.dbMock.read.return_value = self.testJsonRtn[7]
+        jsonInput = '{\"pk\":\"%s\", \"review\":\"%s\"}' \
+                    % (pk, self.testData._testData[7]['review'][0])
+        response = t2dApp.request(url, method='POST', data=jsonInput)
+        self.assertEqual(response.status, '200 OK', 'POST failed (received %s)' % response.status)
+
+        # now read it back to be sure the update took.
+        Shared.dbMock.read.return_value = self.testJsonRtn[7]
+        url = '/t2d/%s' % pk
+        response = t2dApp.request(url)
+        rtnJson = response.data
+        self.assertEqual(response.status, '200 OK', 'GET failed')
+        self.assertEquals(response.headers['Content-Type'], 'text/plain')
+          
+        rtn = json.JSONDecoder().decode(rtnJson)
+        self.assertEqual(rtn['review'][0], self.testData._testData[7]['review'][0], "mismatched review %s vs %s" % (rtn['review'][0], self.testData._testData[7]['review'][0]))
+
+    def testPostUpdateNonExistingItem(self):
+        '''
+        testPostUpdateNonExistingItem
+        Try to update a non-existing item. It should get a 404
+        '''
+        pk = self.testData._testData[7]['pk']
+        Shared.dbMock.read.return_value = None
+        url = '/t2d/'
+        jsonInput = '{\"pk\":\"%s\", \"review\":\"%s\"}' \
+                    % (pk, self.testData._testData[7]['review'][0])
+        response = t2dApp.request(url, method='POST', data=jsonInput)
+        self.assertEqual(response.status, '404 Not Found', 'POST failed (received %s)' % response.status)
+
+    def testPostUpdateWithNewFields(self):
+        '''
+        testPostUodateWithNewFields
+        Try to update an existing item with new columns
+        Should fail with a 400
+        '''
+        # Put (Create) an item
+        name = self.testData._testData[7]['name']
+        pk = self.testData._testData[7]['pk']
+        category = self.testData._testData[7]['category']
+        createdBy = self.testData._testData[7]['createdBy']
+        address = self.testData._testData[7]['address']
+        jsonInput = '{\"name\":\"%s\", \"category\":\"%s\", \"createdBy\":\"%s\", \"address\":\"%s\"}' \
+                    % (name, category, createdBy, address)
+        Shared.dbMock.write.return_value = None
+        Shared.dbMock.read.return_value = None
+        url = '/t2d/'
+        response = t2dApp.request(url, method='PUT', data=jsonInput)
+        self.assertEqual(response.status, '200 OK', 'PUT failed')
+
+        # now update it
+        Shared.dbMock.read.return_value = self.testJsonRtn[7]
+        jsonInput = '{\"pk\":\"%s\", \"ARandomKey\":\"%s\"}' % (pk, 'random key value data')
+        response = t2dApp.request(url, method='POST', data=jsonInput)
+        self.assertEqual(response.status, '400 Bad Request', 'POST failed (received %s)' % response.status)
     
     def testDelete(self):
         '''
