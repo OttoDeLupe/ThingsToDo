@@ -6,6 +6,8 @@ Created on Jul 21, 2011
 import unittest
 import os
 import json
+import logging
+
 import Shared
 from BizLayer import t2dApp
 from mock import Mock
@@ -14,7 +16,7 @@ import Utils
 # Set Test Mode, env checked on bizlayer side to determine
 # whether to use the mock dbConn or a real one
 os.environ['T2DTestMode'] ='true'
-
+logging.basicConfig(filename="t2dLog.log", level=logging.DEBUG, format='%(asctime)s %(levelname)s : %(message)s')
 
 class BizLayerTest(unittest.TestCase):
 
@@ -474,5 +476,6 @@ class BizLayerTest(unittest.TestCase):
     
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
+    #logging.basicConfig(filename="t2dLog.log", level=logging.DEBUG, format='%(asctime)s %(levelname)s : %(message)s')
     t2dApp.run()
     unittest.main()

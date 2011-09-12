@@ -5,6 +5,7 @@ Created on Jun 28, 2011
 '''
 import uuid
 import binascii
+import logging
 
 CATEGORIES = ["Recreational", "Cultural", "Historical"]
 
@@ -28,6 +29,7 @@ class ThingToDo():
     '''
     
     def __init__(self):
+        logging.info('Item - new item')
         self._serialized = {}
 
     def setAttrs (self, *reqd_args, **keywords): 
@@ -47,9 +49,11 @@ class ThingToDo():
           
         # Either address or lat/lon is required
         if ('address' not in self._serialized) and ('lat' not in self._serialized) and ('lon' not in self._serialized):
+            logging.error('Item-setAttrs - one of address or lat/lon required')
             raise AttributeError, "One of address or latlon required"
         
         if self._serialized['category'] not in CATEGORIES:
+            logging.error('Item-setAttrs - category (%s) not in CATEGORIES', self._serialized['category'])
             raise AttributeError,"Invalid category"
         
         # Uniqueness is defined by concatenating the name&category 
@@ -58,9 +62,11 @@ class ThingToDo():
 
     def setAttribute(self, attr, val):
         if attr not in self._serialized:
+            logging.error('Item-setAttribute - %s not a valid attribute', attr)
             raise KeyError 
         else:
             if attr in ('name', 'category','createdBy'):
+                logging.error('Item-setAttribute - trying to reset name, category or createdBy')
                 raise AttributeError
             else:
                 self._serialized[attr] = val

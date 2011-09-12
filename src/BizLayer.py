@@ -32,8 +32,8 @@ Created on Jul 18, 2011
 import web
 import os
 import re
-import uuid
 import json
+import logging
 
 import DataAccessLayer
 import Item
@@ -94,16 +94,19 @@ class t2d():
         matching items back, json-ize them, send them back to the client
         '''
         if not isValidKey(resource):
+            logging.info('Item-GET: invalid resource key (%s)', resource)
             web.badrequest()
             return
         
         try:
             rtn = getByKeys(resource)
         except:
+            logging.info('Item-GET: invalid resource (%s)', resource)
             web.badrequest()
             return
 
         if rtn is None:
+            logging.info('Item-GET: resource not found (%s)', resource)
             web.notfound()
             return 
             
@@ -122,15 +125,18 @@ class t2d():
             dbConn = DataAccessLayer.DataAccessLayer()
 
         if not isValidKey(resource):
+            logging.info('Item-DELETE: invalid resource key (%s)', resource)
             web.badrequest()
             return
 
         try:
             dbConn.delete(resource)
         except AttributeError:
+            logging.warning('Item-DELETE: unable to delete resource (%s)', resource)
             web.notfound()
             return
-        except:
+        except Exception as e:
+            logging.error('Item-DELETE: Unexpected exception when deleting: %s', e)
             web.badrequest()
             return
         web.ok()
@@ -154,11 +160,13 @@ class t2d():
             
         # name, category and createdBy are required
         if not ('name' in itemData and 'category' in itemData and 'createdBy' in itemData):
+            logging.info('Item-PUT: missing required args')
             web.badrequest()
             return
 
         # One of address or lat/lon pair required
         if 'address' not in itemData and not ('lat' in itemData and 'lon' in itemData):
+            logging.info('Item-PUT: missing address and lat/lon')
             web.badrequest()
             return
 
@@ -173,6 +181,7 @@ class t2d():
         try: 
             item.setAttrs(itemData['name'], itemData['category'], itemData['createdBy'], **otherArgs)
         except:
+            logging.error('Item-PUT: unable to set attributes')
             web.badrequest()
             return
         
@@ -186,11 +195,11 @@ class t2d():
         try:
             rtn = dbConn.read(where)
         except Exception as ex:
-            print 'Unexpected error in checking for existing record -', ex
+            logging.error('Item-PUT: Unexpected exception checking for existing record - %s', ex)
             web.badrequest()
             return
         if rtn != None:
-            print 'item already exists'
+            logging.info('Item-PUT: item already exists')
             web.conflict()
             return
         
@@ -198,7 +207,7 @@ class t2d():
         try:
             dbConn.write(item._serialized)
         except Exception as ex:
-            print 'problem in PUT writing item - ', ex
+            logging.error('Item-PUT: unexpected exception writing item - %s', ex)
             web.badrequest()
             return
         
@@ -222,16 +231,19 @@ class t2d():
         # Update the record, adding new columns if they don't already exist
         
         if not isValidKey(newData['pk']):
+            logging.info('Item-POST: invalid resource key (%s)', resource)
             web.badrequest()
             return
         
         try:
             existingData = getByKeys(newData['pk'])
         except:
+            logging.info('Item-POST: invalid resource (%s)', resource)
             web.badrequest()
             return
 
         if existingData is None:
+            logging.info('Item-POST: record does not exist (%s)', newData['pk'])
             web.notfound()
             return
 
@@ -251,11 +263,11 @@ class t2d():
             try:
                 item.setAttribute(attr, val)
             except KeyError:
-                print 'Unknown attribute (%s)' % attr
+                logging.info('Item-POST: Unknown attribute (%s)',attr)
                 web.badrequest()
                 return
             except Exception as e:
-                print e
+                logging.error('Item-POST: unexpected exception %s', e)
                 web.internalerror()
                 return
         web.ok()
@@ -264,7 +276,7 @@ class t2d():
         try:
             dbConn.write(item._serialized)
         except Exception as ex:
-            print 'problem in POST writing item - ', ex
+            logging.error('Item-POST: unexpected exception writing item - %s', ex)
             web.badrequest()
             return
         web.ok()
@@ -282,22 +294,26 @@ class t2dList():
         search = web.input()
         # Search criteria must contain the key category
         if 'category' not in search:
+            logging.info('List-GET - no category supplied')
             web.badrequest()
             return
         # OK, have a category - is it a valid category?
         if search['category'] not in Item.CATEGORIES:
+            logging.info('List-GET - category (%s) not in CATEGORIES', search['category'])
             web.notfound()
             return
         # OK, have a valid category, did we get either lat/lon or address?
         if 'address' not in search:
             if 'lat' not in search and 'lon' not in search:
+                logging.info('List-GET - One of address or lat/lon not supplied')
                 web.badrequest()
                 return
             else:
                 # no address, but we do have the lat/lon
                 try:
                     rtn = getByKeys(None, {'lat':search['lat'], 'lon':search['lon']})
-                except:
+                except Exception as e:
+                    logging.error('List-GET - unexpected exception %s', e)
                     web.internalerror()
                     return
                 web.header('Content-Type', 'text/plain')
@@ -307,6 +323,7 @@ class t2dList():
             try:
                 rtn = getByKeys(None, {'category':search['category'], 'address':search['address']})
             except:
+                logging.error('List-GET - unexpected exception %s', e)
                 web.internalerror()
                 return
             web.header('Content-Type', 'text/plain')
@@ -319,4 +336,6 @@ class t2dList():
     def DELETE(self):
         web.nomethod()
 
-if __name__ == "__main__": t2dApp.run()
+if __name__ == "__main__": 
+    logging.basicConfig(filename="t2dLog.log", level=logging.DEBUG, format='%(asctime)s %(levelname)s : %(message)s')
+    t2dApp.run()

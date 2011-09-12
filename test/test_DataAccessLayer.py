@@ -6,9 +6,10 @@ Created on Jun 27, 2011
 import unittest
 import DataAccessLayer
 import Item
-import sys
-import boto
+import logging
 import Utils
+
+logging.basicConfig(filename="t2dLog.log", level=logging.DEBUG, format='%(asctime)s %(levelname)s : %(message)s')
 
 class DALTestCase(unittest.TestCase):
     def setUp(self):

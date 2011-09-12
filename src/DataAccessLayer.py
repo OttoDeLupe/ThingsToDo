@@ -4,7 +4,7 @@ Created on Jun 28, 2011
 @author: papabear
 '''
 import boto
-import sys
+import logging
 
 AWSSECRETKEY = 'AHkuWnXxYzrX1ttLo8ecmSlgcAJuxD2XkMsKDW92'
 AWSACCESSKEY = '0G11Z2V0K6ZEKXEH9H82'
@@ -24,6 +24,7 @@ class DataAccessLayer():
             self._domain = self._conn.get_domain(AWSDOMAIN)
             assert(self._domain)
         except boto.exception.SDBResponseError:
+            logging.info('DAL-init - create new AWS domain')
             self._domain = self._conn.create_domain(AWSDOMAIN)
                
     def read(self, criteria):
@@ -32,22 +33,21 @@ class DataAccessLayer():
         TBD: need to account for paging/cursors
         '''
         select = 'select * from %s where %s' % (AWSDOMAIN, criteria)
-        print select
         try:
             resultIter = self._domain.select(select)
         except boto.exception.SDBResponseError, e:
-            print "SDBResponseError in read: %s, %s" % (e.status, e.reason)
+            logging.error('DAL-read - SDBResponseError in read: %s, %s', e.status, e.reason)
         except Exception as ex:
-            print 'Unexpected error in read - ', ex
+            logging.critical('DAL-read - unexpected exception %s', ex)
             raise
         rs = []
         try:  
             for r in resultIter:
                 rs.append(r)
         except boto.exception.SDBResponseError, e:
-            print "SDBResponseError in read: %s, %s" % (e.status, e.reason)
+            logging.error('DAL-read - SDBResponseError in read: %s, %s', e.status, e.reason)
         except Exception as ex:
-            print 'Unexpected error in read - ', ex
+            logging.critical('DAL-read - unexpected exception %s', ex)
             raise
         return rs
         
@@ -63,15 +63,17 @@ class DataAccessLayer():
         try:
             foundrow = self._domain.get_item(key)
         except Exception as ex:
-            print 'Unexpected error in write - ', ex
+            logging.critical('DAL-write - unexpected exception %s', ex)
             raise
         
         if foundrow:
             # write new values to existing attributes
+            logging.info('DAL-write - updating existing row')
             for attr, val in item.iteritems():
                 foundrow[attr] = val
             foundrow.save(replace=True)
         else:
+            logging.info('DAL-write - adding new row')
             newrow = self._domain.new_item(key)
             for attr, val in item.iteritems():
                 newrow[attr] = val
@@ -84,12 +86,13 @@ class DataAccessLayer():
         try:
             foundrow = self._domain.get_item(key)
         except Exception as ex:
-            print 'Unexpected error in delete -', ex
+            logging.critical('DAL-delete - unexpected exception %s', ex)
             raise
         
         if foundrow:
             foundrow.delete()
         else:
+            logging.error('DAL-delete - row not found')
             raise AttributeError('Key Not Found')
             
         

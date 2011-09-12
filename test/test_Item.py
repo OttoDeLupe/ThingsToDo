@@ -7,8 +7,9 @@ import unittest
 import Item
 import sys
 import Utils
-import uuid
-#import DataAccessLayer
+import logging
+
+logging.basicConfig(filename="t2dLog.log", level=logging.DEBUG, format='%(asctime)s %(levelname)s : %(message)s')
 
 class ItemTest(unittest.TestCase):
     _dbConn = None
@@ -342,6 +343,4 @@ class ItemTest(unittest.TestCase):
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
-    #suite = unittest.TestLoader().loadTestsFromTestCase(ItemTest)
-    #unittest.main()
     unittest.main()
