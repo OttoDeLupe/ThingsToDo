@@ -5,11 +5,14 @@ Created on Jun 28, 2011
 '''
 import boto
 import logging
+import os
 
 AWSSECRETKEY = 'AHkuWnXxYzrX1ttLo8ecmSlgcAJuxD2XkMsKDW92'
 AWSACCESSKEY = '0G11Z2V0K6ZEKXEH9H82'
-AWSDOMAIN = 'ThingsToDoTestDomain'
-#AWSDOMAIN = 'ThingsToDoDomain'
+if 'T2DTestMode' in os.environ:
+    AWSDOMAIN = 'ThingsToDoTestDomain'
+else:
+    AWSDOMAIN = 'ThingsToDoDomain'
 
 class DataAccessLayer():
     '''
@@ -49,7 +52,7 @@ class DataAccessLayer():
         except Exception as ex:
             logging.critical('DAL-read - unexpected exception %s', ex)
             raise
-        return rs
+        return rs if rs != [] else None
         
         
     def write(self, item):

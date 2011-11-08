@@ -55,11 +55,12 @@ class ItemTest(unittest.TestCase):
         '''
         testInstantiateItemWithLatLon
         '''
-        ll = Item.LatLon(self.testData._testData[3]['lat'], self.testData._testData[3]['lon'])
+        lat = self.testData._testData[3]['lat']
+        lon = self.testData._testData[3]['lon']
         name = self.testData._testData[3]['name']
         createdBy = self.testData._testData[3]['createdBy']
         category = self.testData._testData[3]['category']
-        otherArgs = {'latlon':ll}
+        otherArgs = {'lat':lat, 'lon':lon}
         try:
             item = Item.ThingToDo()
             self.assertTrue(item)
@@ -71,21 +72,22 @@ class ItemTest(unittest.TestCase):
         
         self.assertEquals(item.getName(), name, "names don't match: %s != %s" % (item.getName(), name))
         self.assertEquals(item.getCategory(), category, "categories don't match: %s != %s" % (item.getCategory(), category))
-        self.assertEquals(item.getLatLon()._lat, ll._lat, "lats don't match: %s != %s" % (item.getLatLon()._lat, ll._lat))
-        self.assertEquals(item.getLatLon()._lon, ll._lon, "lons don't match: %s != %s" % (item.getLatLon()._lon, ll._lon))
+        self.assertEquals(item.getLat(), lat, "lats don't match: %s != %s" % (item.getLat(), lat))
+        self.assertEquals(item.getLon(), lon, "lons don't match: %s != %s" % (item.getLon(), lon))
         
     def testInstantiateItemMaxArgs(self):
         '''
         testInstantiateItemMaxArgs
         '''
-        ll = Item.LatLon(self.testData._testData[3]['lat'], self.testData._testData[3]['lon'])
+        lat = self.testData._testData[3]['lat']
+        lon =  self.testData._testData[3]['lon']
         name = self.testData._testData[3]['name']
         createdBy = self.testData._testData[3]['createdBy']
         category = self.testData._testData[3]['category']
         tele = self.testData._testData[3]['phone']
         addr = self.testData._testData[3]['address']
         website = self.testData._testData[3]['url']
-        otherArgs = {'latlon': ll, 'phone':tele, 'address':addr, 'url':website}
+        otherArgs = {'lat': lat, 'lon':lon, 'phone':tele, 'address':addr, 'url':website}
         try:
             item = Item.ThingToDo()
             self.assertTrue(item)
@@ -98,8 +100,8 @@ class ItemTest(unittest.TestCase):
         
         self.assertEquals(item.getName(), name, "names don't match: %s != %s" % (item.getName(), name))
         self.assertEquals(item.getCategory(), category, "categories don't match: %s != %s" % (item.getCategory(), category))
-        self.assertEquals(item.getLatLon()._lat, ll._lat, "lats don't match: %s != %s" % (item.getLatLon()._lat, ll._lat))
-        self.assertEquals(item.getLatLon()._lon, ll._lon, "lons don't match: %s != %s" % (item.getLatLon()._lon, ll._lon))
+        self.assertEquals(item.getLat(), lat, "lats don't match: %s != %s" % (item.getLat(), lat))
+        self.assertEquals(item.getLon(), lon, "lons don't match: %s != %s" % (item.getLon(), lon))
         self.assertEquals(item.getPhone(), tele, "telephone #s don't match: %s != %s" % (item.getPhone(), tele))
         self.assertEquals(item.getAddress(), addr, "addresses don't match: %s != %s" % (item.getAddress(), addr))
         self.assertEquals(item.getUrl(), website, "names don't match: %s != %s" % (item.getUrl(), website))
@@ -143,7 +145,8 @@ class ItemTest(unittest.TestCase):
         '''
         testCreateAllArgs
         '''
-        ll = Item.LatLon(self.testData._testData[0]['lat'], self.testData._testData[0]['lon'])
+        lat = self.testData._testData[0]['lat']
+        lon = self.testData._testData[0]['lon']
         name = self.testData._testData[0]['name']
         createdBy = self.testData._testData[0]['createdBy']
         category = self.testData._testData[0]['category']
@@ -154,7 +157,7 @@ class ItemTest(unittest.TestCase):
         rate = self.testData._testData[0]['rating']
         revs = self.testData._testData[0]['review']
         description = self.testData._testData[0]['url']
-        otherArgs = {'latlon':ll, 'phone':tele, 'address':addr, 'url':website, 'email':mail, 'rating':rate,
+        otherArgs = {'lat':lat, 'lon':lon, 'phone':tele, 'address':addr, 'url':website, 'email':mail, 'rating':rate,
                      'review':revs, 'descr':description}
         try:
             item = Item.ThingToDo()
@@ -175,15 +178,16 @@ class ItemTest(unittest.TestCase):
         self.assertEqual(item.getDescr(), description)
         self.assertEqual(item.getRating(), rate)
         self.assertEqual(item.getReview(), revs)
-        self.assertEqual(item.getLatLon()._lat, ll._lat)
-        self.assertEqual(item.getLatLon()._lon, ll._lon)
+        self.assertEqual(item.getLat(), lat)
+        self.assertEqual(item.getLon(), lon)
         
     def testUpdateExistingAttribute(self):
         '''
         testUpdatetExistingAttribute
         Update an existing attribute with a new value
         '''
-        ll = Item.LatLon(self.testData._testData[0]['lat'], self.testData._testData[0]['lon'])
+        lat = self.testData._testData[0]['lat']
+        lon = self.testData._testData[0]['lon']
         name = self.testData._testData[0]['name']
         createdBy = self.testData._testData[0]['createdBy']
         category = self.testData._testData[0]['category']
@@ -194,7 +198,7 @@ class ItemTest(unittest.TestCase):
         rate = self.testData._testData[0]['rating']
         revs = self.testData._testData[0]['review']
         description = self.testData._testData[0]['url']
-        otherArgs = {'latlon':ll, 'phone':tele, 'address':addr, 'url':website, 'email':mail, 'rating':rate,
+        otherArgs = {'lat':lat, 'lon':lon, 'phone':tele, 'address':addr, 'url':website, 'email':mail, 'rating':rate,
                      'review':revs, 'descr':description}
         try:
             item = Item.ThingToDo()
@@ -214,7 +218,8 @@ class ItemTest(unittest.TestCase):
         testSetNonExistingAttribute
         Add a new attribute to an existing item, should fail
         '''
-        ll = Item.LatLon(self.testData._testData[0]['lat'], self.testData._testData[0]['lon'])
+        lat = self.testData._testData[0]['lat']
+        lon = self.testData._testData[0]['lon']
         name = self.testData._testData[0]['name']
         createdBy = self.testData._testData[0]['createdBy']
         category = self.testData._testData[0]['category']
@@ -225,7 +230,7 @@ class ItemTest(unittest.TestCase):
         rate = self.testData._testData[0]['rating']
         revs = self.testData._testData[0]['review']
         description = self.testData._testData[0]['url']
-        otherArgs = {'latlon':ll, 'phone':tele, 'address':addr, 'url':website, 'email':mail, 'rating':rate,
+        otherArgs = {'lat':lat, 'lon':lon, 'phone':tele, 'address':addr, 'url':website, 'email':mail, 'rating':rate,
                      'review':revs, 'descr':description}
         try:
             item = Item.ThingToDo()
@@ -245,7 +250,8 @@ class ItemTest(unittest.TestCase):
         testUpdateNonMutableAttribute
         Shouldn't be able to update name, category or createdBy
         '''
-        ll = Item.LatLon(self.testData._testData[0]['lat'], self.testData._testData[0]['lon'])
+        lat = self.testData._testData[0]['lat']
+        lon = self.testData._testData[0]['lon']
         name = self.testData._testData[0]['name']
         createdBy = self.testData._testData[0]['createdBy']
         category = self.testData._testData[0]['category']
@@ -256,7 +262,7 @@ class ItemTest(unittest.TestCase):
         rate = self.testData._testData[0]['rating']
         revs = self.testData._testData[0]['review']
         description = self.testData._testData[0]['url']
-        otherArgs = {'latlon':ll, 'phone':tele, 'address':addr, 'url':website, 'email':mail, 'rating':rate,
+        otherArgs = {'lat':lat, 'lon':lon, 'phone':tele, 'address':addr, 'url':website, 'email':mail, 'rating':rate,
                      'review':revs, 'descr':description}
         try:
             item = Item.ThingToDo()
@@ -271,16 +277,19 @@ class ItemTest(unittest.TestCase):
         self.assertRaises(AttributeError,item.setAttribute, 'name', 'ANewName') 
 ###
 # Requirement: Be able to encapsulate a lat/lon pair
+#         SimpleDB represents floats as strings (in order to do
+#          comparisons. So need to test that the conversion happens
+#          correctly
 ###
-    def testLatLon(self):
+    def testLatLonConvertToString(self):
         '''
         testLatLon
         '''
         lat = 42.687
         lon = -71.110
         ll = Item.LatLon(lat, lon)
-        self.assertEqual(ll._lat, lat)
-        self.assertEqual(ll._lon, lon)
+        self.assertEqual(ll._lat, '42687000')
+        self.assertEqual(ll._lon, '-71110000')
         
     def testLatLonBoundingBox(self):
         '''
@@ -294,10 +303,10 @@ class ItemTest(unittest.TestCase):
         self.assertEqual(len(ll._box), 4)
         for latlon in ll._box:
             self.assertEqual(len(latlon), 2)
-        self.assertTrue(ll.getLATmax() > lat)
-        self.assertTrue(ll.getLONmax() > lon)
-        self.assertTrue(ll.getLATmin() < lat)
-        self.assertTrue(ll.getLONmin() < lon)
+        self.assertEqual(ll.getLATmax(), '42832000')
+        self.assertEqual(ll.getLONmax(), '-70965000')
+        self.assertEqual(ll.getLATmin(), '42541999')
+        self.assertEqual(ll.getLONmin(), '-71255000')
 
 ###
 # Requirement: search criteria is an encapsulation. Need to be able to create
@@ -328,13 +337,16 @@ class ItemTest(unittest.TestCase):
         testMakeWhereClause
         '''
         offset = 10
-        ll = Item.LatLon(42.69095, -71.1277)
+        lat = 42.69095
+        lon = -71.1277
+        ll = Item.LatLon(lat,lon)
         ll.boundingBox(offset)
-        expected = 'lat between \"%f\" and \"%f\" and lon between \"%f\" and \"%f\"' % \
+        expected = 'lat between %s and %s and lon between %s and %s' % \
             (ll.getLATmax(), ll.getLATmin(), ll.getLONmax(), ll.getLONmin())
             
         searchFor = Item.SearchFor()
-        searchFor.setAttr('latlon', ll)
+        searchFor.setAttr('lat', lat)
+        searchFor.setAttr('lon', lon)
         searchFor.setAttr('offset', offset)
 
         whereclause = searchFor.makeWhereClause()

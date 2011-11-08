@@ -40,6 +40,7 @@ import Item
 
 urls = ('/t2d/(.*)', 't2d', '/t2dList', 't2dList')
 t2dApp = web.application(urls, globals())
+latlon_offset = 10.0
 
 VALID_KEY = re.compile('[a-zA-Z0-9_-]{1,255}')
 def isValidKey(key):
@@ -61,6 +62,11 @@ def getByKeys(pk=None, attrs=None):
     help function used by t2d.GET and t2dList.GET to query
     the data store & return what is found based on the 
     key (PK) or attributes passed
+    
+    BUG: if the attrs are lat/lon, this code will create a search string that will never find anything
+     - there's no item that will be at the unique lat/lon passed. 
+     The search criteria needs to be expanded to account for the lat/lon bounding box
+     But - should this be only for t2dlist searches, or for t2d?foo=... as well?
     '''
     if isTestMode(): # check env. if in test mode, import dbconn mock
         import Shared 
@@ -76,15 +82,39 @@ def getByKeys(pk=None, attrs=None):
             searchFor.setAttr(k, v)
     else:
         raise KeyError
-    where = searchFor.makeWhereClause()
 
     try:
+        where = searchFor.makeWhereClause()
+        logging.debug('getByKeys - looking for: %s', where)
         rtn = dbConn.read(where)
     except Exception as e:
         print e
         raise e
+    logging.debug('getByKeys - found: %s', rtn)
     return rtn
 
+def getByLatLon(lat,lon):
+    if isTestMode():
+        import Shared
+        dbConn = Shared.dbMock
+    else:
+        dbConn = DataAccessLayer.DataAccessLayer()
+        
+    searchFor = Item.SearchFor()
+    searchFor.setAttr('lat', lat)
+    searchFor.setAttr('lon', lon)
+    searchFor.setAttr('offset', latlon_offset)
+    logging.debug('getByLatLon - looking near %s, %s', lat, lon)
+    try:
+        where = searchFor.makeWhereClause()
+        logging.debug('getByLatLon - where clause: %s', where)
+        rtn = dbConn.read(where)
+    except Exception as e:
+        print e
+        raise e
+    logging.debug('getByLatLon - found: %s', rtn)
+    return rtn
+        
 
 class t2d():
     ''' REST interface implementing WebService methods for a Thing To Do (t2d)'''
@@ -148,16 +178,22 @@ class t2d():
         '''
         jsonData = web.data()
         item = Item.ThingToDo()
-        itemData = json.JSONDecoder().decode(jsonData)
+        try:
+            itemData = json.JSONDecoder().decode(jsonData)
+        except:
+            logging.error('Item-PUT: unable to decode json %s' % jsonData)
+            web.badrequest()
+            return
+        
         if isTestMode(): # check env. if in test mode, import dbconn mock
             import Shared
             dbConn = Shared.dbMock
         else:
             dbConn = DataAccessLayer.DataAccessLayer()
         
-        if 'lat' in itemData and 'lon' in itemData:
-            itemData['latlon'] = Item.LatLon(itemData['lat'], itemData['lon'])
-            
+#        if 'lat' in itemData and 'lon' in itemData:
+#            itemData['latlon'] = Item.LatLon(itemData['lat'], itemData['lon'])
+#            
         # name, category and createdBy are required
         if not ('name' in itemData and 'category' in itemData and 'createdBy' in itemData):
             logging.info('Item-PUT: missing required args')
@@ -175,7 +211,7 @@ class t2d():
             if attr == 'name' or attr == 'category' or attr == 'createdBy':
                 # remove from the dict so that what remains is what setAttrs expects for keyword args
                 continue
-            if attr == 'lat' or attr == 'lon': continue
+            #if attr == 'lat' or attr == 'lon': continue
             otherArgs[attr] = val
         
         try: 
@@ -199,7 +235,7 @@ class t2d():
             web.badrequest()
             return
         if rtn != None:
-            logging.info('Item-PUT: item already exists')
+            logging.info('Item-PUT: item already exists (%s)', PK)
             web.conflict()
             return
         
@@ -231,14 +267,14 @@ class t2d():
         # Update the record, adding new columns if they don't already exist
         
         if not isValidKey(newData['pk']):
-            logging.info('Item-POST: invalid resource key (%s)', resource)
+            logging.info('Item-POST: invalid resource key (%s)', newData['pk'])
             web.badrequest()
             return
         
         try:
             existingData = getByKeys(newData['pk'])
         except:
-            logging.info('Item-POST: invalid resource (%s)', resource)
+            logging.info('Item-POST: invalid resource (%s)',newData['pk'])
             web.badrequest()
             return
 
@@ -292,6 +328,7 @@ class t2dList():
     """
     def GET(self):
         search = web.input()
+        logging.info('List-GET - entering')
         # Search criteria must contain the key category
         if 'category' not in search:
             logging.info('List-GET - no category supplied')
@@ -311,12 +348,15 @@ class t2dList():
             else:
                 # no address, but we do have the lat/lon
                 try:
-                    rtn = getByKeys(None, {'lat':search['lat'], 'lon':search['lon']})
+                    rtn = getByLatLon(float(search['lat']), float(search['lon']))
                 except Exception as e:
                     logging.error('List-GET - unexpected exception %s', e)
                     web.internalerror()
                     return
                 web.header('Content-Type', 'text/plain')
+                logging.debug('List-GET - searched for lat %s lon %s', search['lat'], search['lon'])
+                logging.debug('List-GET - found %s', rtn)
+                logging.debug('List-GET - returned json %s', json.JSONEncoder().encode(rtn))
                 return json.JSONEncoder().encode(rtn)
         else:
             # did get address, look for that

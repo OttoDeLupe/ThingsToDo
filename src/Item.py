@@ -43,9 +43,8 @@ class ThingToDo():
         if 'descr'   in keywords: self._serialized['descr']   = keywords['descr'] 
         if 'rating'  in keywords: self._serialized['rating']  = keywords['rating']   
         if 'review'  in keywords: self._serialized['review']  = keywords['review']
-        if 'latlon'  in keywords:
-            self._serialized['lat'] = keywords['latlon']._lat
-            self._serialized['lon'] = keywords['latlon']._lon
+        if 'lat'     in keywords: self._serialized['lat']     = keywords['lat']
+        if 'lon'     in keywords: self._serialized['lon']     = keywords['lon']
           
         # Either address or lat/lon is required
         if ('address' not in self._serialized) and ('lat' not in self._serialized) and ('lon' not in self._serialized):
@@ -91,30 +90,54 @@ class ThingToDo():
         return self._serialized['rating']
     def getReview(self):
         return self._serialized['review']
-    def getLatLon(self):
-        return LatLon(self._serialized['lat'], self._serialized['lon'])
+    def getLat(self):
+        return self._serialized['lat'] 
+    def getLon(self):
+        return self._serialized['lon']
     
 class LatLon():
     def __init__(self,lat,lon):
-        self._lat = lat
-        self._lon = lon
+        # yeah yeah... this is poor polymorphism, but this can be called with
+        # strings or floats. And conversions have to happen based on the
+        # data type passed.
+        if type(lat) == str and type(lon) == str:
+            self._latFloat = float(lat)
+            self._lonFloat = float(lon)
+        elif type(lat) == float and type(lon) == float:
+            self._latFloat = lat
+            self._lonFloat = lon
+        else:
+            raise AttributeError
+                    
+        self._lat = self.toComparableString(self._latFloat)
+        self._lon = self.toComparableString(self._lonFloat)
+        self._box = []
+        
+    def toComparableString(self, number):
+        return str(int(number*1000000))
         
     def boundingBox(self, offset):
         '''
         set a list of lat/lon pairs, [[LATmax, LONmin],[LATmin, LONmin],[LATmax,LONmax],[LATmin, LONmax]]
         based on the offset (in miles) passed, with self._lat and self._lon as the center to the box.
         Use a simple xMiles = yDecimalDegrees to do the arithmetic
+        Need to have these stored as strings (that can be lexicographically compared) so that SimpleDB
+        comparisons can be done.
         ''' 
         # simple conversion formula: 0.0145 degrees per mile
         # LATmax = _lat + 0.0145 * offset, LONmax = _lon + 0.0145 * offset 
         # use minus to get LAT, LON min
         conversionFactor = 0.0145
         offsetFactor = conversionFactor * offset
-        self._box = []
-        self._box.append([(self._lat + offsetFactor), (self._lon - offsetFactor)]) # LATmax, LONmin
-        self._box.append([(self._lat - offsetFactor), (self._lon - offsetFactor)]) # LATmin, LONmin
-        self._box.append([(self._lat + offsetFactor), (self._lon + offsetFactor)]) # LATmax, LONmax
-        self._box.append([(self._lat - offsetFactor), (self._lon + offsetFactor)]) # LATmin, LONmax
+
+        self._box.append([self.toComparableString(self._latFloat + offsetFactor), 
+                          self.toComparableString(self._lonFloat - offsetFactor)]) # LATmax, LONmin
+        self._box.append([self.toComparableString(self._latFloat - offsetFactor), 
+                          self.toComparableString(self._lonFloat - offsetFactor)]) # LATmin, LONmin
+        self._box.append([self.toComparableString(self._latFloat + offsetFactor), 
+                          self.toComparableString(self._lonFloat + offsetFactor)]) # LATmax, LONmax
+        self._box.append([self.toComparableString(self._latFloat - offsetFactor), 
+                          self.toComparableString(self._lonFloat + offsetFactor)]) # LATmin, LONmax
         
     def getLATmax(self):
         assert(self._box)
@@ -143,22 +166,30 @@ class SearchFor():
         return self._criteria[attr]
     
     def makeWhereClause(self):
-        selectStr = ""
+        selectStr = ''
         # check to see if theres a latlon attr. 
         # If so, there must be a offset attr; otherwise throw exception
-        if 'latlon' in self._criteria:
-            assert('offset' in self._criteria)
-            ll = self._criteria['latlon']
+        if 'lat' in self._criteria or 'lon' in self._criteria:
+            if 'offset' not in self._criteria:
+                raise AttributeError
+            
+            lat = self._criteria['lat']
+            lon = self._criteria['lon']
+            ll = LatLon(lat, lon)
             ll.boundingBox(self._criteria['offset'])
 
-            selectStr += 'lat between \"%f\" and \"%f\" and lon between \"%f\" and \"%f\"' % \
+            selectStr += 'lat between %s and %s and lon between %s and %s' % \
                 (ll.getLATmax(), ll.getLATmin(), ll.getLONmax(), ll.getLONmin())
-         
+           # logging.debug('makeWhereClause(1): %s', selectStr)
+            
         for attr, val in self._criteria.iteritems():
-            if attr == 'latlon' or attr == 'offset':
+            if attr == 'lat' or attr == 'lon' or attr == 'offset':
                 continue # handled these above
             if selectStr == '':
                 selectStr += '%s = \"%s\"' % (attr, val)
             else:
                 selectStr += ' and %s = \"%s\"' % (attr, val)
+            # logging.debug('makeWhereClause(2): %s', selectStr)
+            
+        #logging.debug('makeWhereClause(3): %s', selectStr)
         return selectStr

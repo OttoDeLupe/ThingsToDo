@@ -13,13 +13,21 @@ from BizLayer import t2dApp
 from mock import Mock
 import Utils
 
+
+ 
 # Set Test Mode, env checked on bizlayer side to determine
 # whether to use the mock dbConn or a real one
 os.environ['T2DTestMode'] ='true'
 logging.basicConfig(filename="t2dLog.log", level=logging.DEBUG, format='%(asctime)s %(levelname)s : %(message)s')
 
 class BizLayerTest(unittest.TestCase):
-
+    """
+    Main Use Case
+    search based on lat/lon & optional category. Get a list of items w/in bounding box that match.
+    Returned item data is a subset: PK, name, address, url, phone, rating, description.
+    Select one of the items & drill down based on PK to get all item data
+    """
+    
     def ConvertTestDataToJson(self, testDataList):
         jsonData = []
         for d in testDataList:
@@ -229,6 +237,12 @@ class BizLayerTest(unittest.TestCase):
         response = t2dApp.request(url, method='PUT', data=jsonInput)
         self.assertEquals(response.status, '200 OK')      
 
+    def testPutEmptyItem(self):
+        jsonInput = ''
+        url = '/t2d/'
+        response = t2dApp.request(url, method='PUT', data=jsonInput)
+        self.assertEquals(response.status, '400 Bad Request')
+        
     def testPutItemMissingRequiredAttributes(self):
         '''
         testPutItemMissingRequiredAttributes
