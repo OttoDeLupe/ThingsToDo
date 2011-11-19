@@ -9,6 +9,7 @@ import os
 
 AWSSECRETKEY = 'AHkuWnXxYzrX1ttLo8ecmSlgcAJuxD2XkMsKDW92'
 AWSACCESSKEY = '0G11Z2V0K6ZEKXEH9H82'
+# select * from ThingsToDoDomain where lat between '42836000' and '42546000' and lon between '-70983000' and '-71273000'
 if 'T2DTestMode' in os.environ:
     AWSDOMAIN = 'ThingsToDoTestDomain'
 else:

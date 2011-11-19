@@ -211,7 +211,16 @@ class t2d():
             if attr == 'name' or attr == 'category' or attr == 'createdBy':
                 # remove from the dict so that what remains is what setAttrs expects for keyword args
                 continue
-            #if attr == 'lat' or attr == 'lon': continue
+            # special handling of lat/lon so we get a textual represenation, rather than a numeric
+            if attr == 'lat':
+                ll = Item.LatLon(val, 0.0)
+                otherArgs[attr] = ll._lat
+                continue
+            if attr == 'lon':
+                ll = Item.LatLon(0.0, val)
+                otherArgs[attr] = ll._lon
+                continue
+            # everything else just gets added to the keyword args
             otherArgs[attr] = val
         
         try: 

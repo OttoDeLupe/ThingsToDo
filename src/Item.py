@@ -178,7 +178,7 @@ class SearchFor():
             ll = LatLon(lat, lon)
             ll.boundingBox(self._criteria['offset'])
 
-            selectStr += 'lat between %s and %s and lon between %s and %s' % \
+            selectStr += "lat between \'%s\' and \'%s\' and lon between \'%s\' and \'%s\'" % \
                 (ll.getLATmax(), ll.getLATmin(), ll.getLONmax(), ll.getLONmin())
            # logging.debug('makeWhereClause(1): %s', selectStr)
             
