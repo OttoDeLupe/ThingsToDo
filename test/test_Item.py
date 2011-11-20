@@ -342,7 +342,7 @@ class ItemTest(unittest.TestCase):
         ll = Item.LatLon(lat,lon)
         ll.boundingBox(offset)
         expected = "lat between \'%s\' and \'%s\' and lon between \'%s\' and \'%s\'" % \
-            (ll.getLATmax(), ll.getLATmin(), ll.getLONmax(), ll.getLONmin())
+            (ll.getLATmin(), ll.getLATmax(), ll.getLONmax(), ll.getLONmin())
             
         searchFor = Item.SearchFor()
         searchFor.setAttr('lat', lat)

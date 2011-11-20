@@ -178,8 +178,10 @@ class SearchFor():
             ll = LatLon(lat, lon)
             ll.boundingBox(self._criteria['offset'])
 
+            # For this SimpleDB query to work, it has to be in LATmin, LATmax, LONmax, LONmin order
+            # open question whether this works south of equator or east of prime meridian.
             selectStr += "lat between \'%s\' and \'%s\' and lon between \'%s\' and \'%s\'" % \
-                (ll.getLATmax(), ll.getLATmin(), ll.getLONmax(), ll.getLONmin())
+                (ll.getLATmin(), ll.getLATmax(), ll.getLONmax(), ll.getLONmin())
            # logging.debug('makeWhereClause(1): %s', selectStr)
             
         for attr, val in self._criteria.iteritems():
